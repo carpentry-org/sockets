@@ -1,0 +1,13 @@
+(local-include "../src/sockets.h")
+
+(register-type Socket)
+
+(defmodule Socket
+  (register buf-size Int)
+  (register setup-client (Fn [String Int] Socket))
+  (register setup-server (Fn [String Int] Socket))
+  (register listen (Fn [Socket] ()))
+  (register accept (Fn [Socket] Socket))
+  (register send (Fn [Socket String] ()))
+  (register read (Fn [Socket] String))
+)

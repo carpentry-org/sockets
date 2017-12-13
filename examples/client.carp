@@ -1,0 +1,8 @@
+(load "sockets.carp")
+(use Socket)
+
+(defn main []
+  (let [sock (setup-client @"127.0.0.1" 8080)]
+    (do
+      (send sock @"hi from client")
+      (IO.println &(read sock)))))
