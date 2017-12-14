@@ -2,7 +2,6 @@
 (use Socket)
 
 (defn main []
-  (let [sock (setup-client @"127.0.0.1" 8080)]
-    (do
-      (send sock @"hi from client")
-      (IO.println &(read sock)))))
+  (Socket.with-client sock @"127.0.0.1" 8080
+    (send sock @"hi from client")
+    (IO.println &(read sock))))

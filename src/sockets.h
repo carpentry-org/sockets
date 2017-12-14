@@ -60,3 +60,7 @@ Socket Socket_accept(Socket sock) {
   ret.socket = accept(sock.socket, (struct sockaddr *)&sock.them, (socklen_t*)&size);
   return ret;
 }
+
+void Socket_close(Socket sock) {
+  close(sock.socket);
+}

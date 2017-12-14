@@ -3,7 +3,7 @@
 
 (defn main []
   (Socket.with-server sock @"127.0.0.1" 8080
-    (Socket.with-connection sock client
+    (Socket.while-connection sock client
       (IO.println &(read client))
       (send client @"hi")
       (IO.println "yay"))))

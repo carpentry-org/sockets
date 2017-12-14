@@ -10,4 +10,24 @@
   (register accept (Fn [Socket] Socket))
   (register send (Fn [Socket String] ()))
   (register read (Fn [Socket] String))
+  (register close (Fn [Socket] ()))
+
+  (defmacro with-client [name host port :rest forms]
+    (list 'let (array name (list 'Socket.setup-client host port))
+      (cons-last (list 'Socket.close name) (cons 'do forms))))
+
+  (defmacro with-server [name host port :rest forms]
+    (list 'let (array name (list 'Socket.setup-server host port))
+      (cons-last (list 'Socket.close name) (cons 'do forms))))
+
+  (defmacro with-connection [from to :rest forms]
+    (list 'do (list 'listen from)
+      (list 'let (array to (list 'accept from))
+        (cons-last (list 'Socket.close to) (cons 'do forms)))))
+
+  (defmacro while-connection [from to :rest forms]
+    (list 'do (list 'listen from)
+      (list 'while true
+        (list 'let (array to (list 'accept from))
+          (cons-last (list 'Socket.close to) (cons 'do forms))))))
 )
