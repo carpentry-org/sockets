@@ -1,9 +1,10 @@
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "carp_memory.h"
 #include "core.h"
 
 int Socket_buf_MINUS_size = 1024;
@@ -13,7 +14,7 @@ typedef struct {
   int socket;
 } Socket;
 
-Socket Socket_setup_MINUS_client(string addr, int port) {
+Socket Socket_setup_MINUS_client(String addr, int port) {
   Socket ret;
 
   ret.socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -25,17 +26,17 @@ Socket Socket_setup_MINUS_client(string addr, int port) {
   return ret;
 }
 
-void Socket_send(Socket sock, string msg) {
+void Socket_send(Socket sock, String msg) {
   send(sock.socket, msg, strlen(msg), 0);
 }
 
-string Socket_read(Socket sock) {
-  string buf = CARP_MALLOC(Socket_buf_MINUS_size);
+String Socket_read(Socket sock) {
+  String buf = CARP_MALLOC(Socket_buf_MINUS_size);
   int val = read(sock.socket, buf, Socket_buf_MINUS_size);
   return buf;
 }
 
-Socket Socket_setup_MINUS_server(string addr, int port) {
+Socket Socket_setup_MINUS_server(String addr, int port) {
   Socket ret;
   int opt = 1;
 

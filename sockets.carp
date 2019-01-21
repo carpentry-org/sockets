@@ -1,4 +1,4 @@
-(local-include "../src/sockets.h")
+(relative-include "src/sockets.h")
 
 (register-type Socket)
 
