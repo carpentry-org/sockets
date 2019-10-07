@@ -4,9 +4,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "carp_memory.h"
-#include "core.h"
-
 int Socket_buf_MINUS_size = 1024;
 
 typedef struct {
