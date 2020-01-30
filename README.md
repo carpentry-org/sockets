@@ -33,9 +33,9 @@ Alternatively, you can also use the macro `with-connection` in the server, like
 so:
 
 ```clojure
-(Socket.with-server server @"127.0.0.1" 80
-  (Socket.with-connection server client
-    (send client @"nice to meet you!")
+(Socket.with-server server "127.0.0.1" 80
+  (Socket.with-connection &server client
+    (send &client "nice to meet you!")
   )
 )
 ```
@@ -43,9 +43,9 @@ so:
 If you want a server that accepts connections forever, use `while-connection`:
 
 ```clojure
-(Socket.with-server server @"127.0.0.1" 80
-  (Socket.while-connection server client
-    (send client @"nice to meet you!")
+(Socket.with-server server "127.0.0.1" 80
+  (Socket.while-connection &server client
+    (send &client "nice to meet you!")
   )
 )
 ```

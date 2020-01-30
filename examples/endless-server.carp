@@ -2,8 +2,8 @@
 (use Socket)
 
 (defn main []
-  (Socket.with-server sock @"127.0.0.1" 8080
-    (Socket.while-connection sock client
-      (IO.println &(read client))
-      (send client @"hi")
+  (Socket.with-server sock "127.0.0.1" 8080
+    (Socket.while-connection &sock client
+      (IO.println &(read &client))
+      (send &client "hi")
       (IO.println "yay"))))

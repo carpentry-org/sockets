@@ -4,12 +4,13 @@
 
 (defmodule Socket
   (register buf-size Int)
-  (register setup-client (Fn [String Int] Socket))
-  (register setup-server (Fn [String Int] Socket))
-  (register listen (Fn [Socket] ()))
-  (register accept (Fn [Socket] Socket))
-  (register send (Fn [Socket String] ()))
-  (register read (Fn [Socket] String))
+  (register setup-client (Fn [&String Int] Socket))
+  (register setup-server (Fn [&String Int] Socket))
+  (register listen (Fn [&Socket] ()))
+  (register accept (Fn [&Socket] Socket))
+  (register send (Fn [&Socket &String] ()))
+  (register send-bytes (Fn [&Socket (Array Byte)] ()))
+  (register read (Fn [&Socket] String))
   (register close (Fn [Socket] ()))
 
   (defmacro with-client [name host port :rest forms]
