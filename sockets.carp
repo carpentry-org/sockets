@@ -6,6 +6,7 @@
   (register buf-size Int)
   (register setup-client (Fn [&String Int] Socket))
   (register setup-server (Fn [&String Int] Socket))
+  (register valid? (Fn [&Socket] Bool))
   (register listen (Fn [&Socket] ()))
   (register accept (Fn [&Socket] Socket))
   (register send (Fn [&Socket &String] ()))

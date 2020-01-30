@@ -9,7 +9,12 @@ int Socket_buf_MINUS_size = 1024;
 typedef struct {
   struct sockaddr_in them;
   int socket;
+  bool valid;
 } Socket;
+
+bool Socket_valid_QMARK_(Socket* s) {
+  return s->valid;
+}
 
 Socket Socket_setup_MINUS_client(String* addr, int port) {
   Socket ret;
@@ -18,7 +23,7 @@ Socket Socket_setup_MINUS_client(String* addr, int port) {
   ret.them.sin_family = AF_INET;
   ret.them.sin_port = htons(port);
   inet_pton(AF_INET, *addr, &(ret.them.sin_addr));
-  connect(ret.socket, (struct sockaddr*)&(ret.them), sizeof(ret.them));
+  ret.valid = connect(ret.socket, (struct sockaddr*)&(ret.them), sizeof(ret.them)) == 0;
 
   return ret;
 }
@@ -33,7 +38,7 @@ void Socket_send_MINUS_bytes(Socket* sock, Array* msg) {
 
 String Socket_read(Socket* sock) {
   String buf = CARP_MALLOC(Socket_buf_MINUS_size);
-  int val = read(sock->socket, buf, Socket_buf_MINUS_size);
+  read(sock->socket, buf, Socket_buf_MINUS_size);
   return buf;
 }
 
@@ -47,7 +52,7 @@ Socket Socket_setup_MINUS_server(String* addr, int port) {
   ret.them.sin_addr.s_addr = INADDR_ANY;
   ret.them.sin_port = htons(port);
   inet_pton(AF_INET, *addr, &(ret.them.sin_addr));
-  bind(ret.socket, (struct sockaddr *)&(ret.them),  sizeof(ret.them));
+  ret.valid = bind(ret.socket, (struct sockaddr *)&(ret.them),  sizeof(ret.them)) == 0;
 
   return ret;
 }

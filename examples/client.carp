@@ -3,5 +3,8 @@
 
 (defn main []
   (Socket.with-client sock "127.0.0.1" 8080
-    (send &sock "hi from client")
-    (IO.println &(read &sock))))
+    (if (Socket.valid? &sock)
+      (do
+        (send &sock "hi from client")
+        (IO.println &(read &sock)))
+      (IO.errorln "client couldn’t be started."))))

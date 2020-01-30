@@ -9,25 +9,26 @@ Setting up a socket can be done through `setup-server` and
 `with-client`.
 
 ```clojure
-(let [sock (Socket.setup-server @"127.0.0.1" 80)]
+(let [sock (Socket.setup-server "127.0.0.1" 80)]
   ; ... work with sock
   )
 
-(let [sock (Socket.setup-client @"127.0.0.1" 80)]
+(let [sock (Socket.setup-client "127.0.0.1" 80)]
   ; ...
   )
 
-(Socket.with-server sock @"127.0.0.1" 80
+(Socket.with-server sock "127.0.0.1" 80
   ; use sock as above
   )
 
-(Socket.with-client sock @"127.0.0.1" 80
+(Socket.with-client sock "127.0.0.1" 80
   ; use sock as above
   )
 ```
 
-Client sockets can `send` and `read` right away, whereas server sockets have to
-`listen` and `accept` first. Just like in C!
+After checking that they are valid using `Socket.valid?`, client sockets can
+`send` and `read` right away, whereas server sockets have to `listen` and
+`accept` first. Just like in C!
 
 Alternatively, you can also use the macro `with-connection` in the server, like
 so:
