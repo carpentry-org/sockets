@@ -42,6 +42,14 @@ String Socket_read(Socket* sock) {
   return buf;
 }
 
+Array Socket_read_MINUS_bytes(Socket* sock) {
+  Array buf;
+  buf.capacity = Socket_buf_MINUS_size;
+  buf.data = CARP_MALLOC(Socket_buf_MINUS_size);
+  buf.len = read(sock->socket, buf.data, Socket_buf_MINUS_size);
+  return buf;
+}
+
 Socket Socket_setup_MINUS_server(String* addr, int port) {
   Socket ret;
   int opt = 1;

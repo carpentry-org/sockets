@@ -3,15 +3,27 @@
 (register-type Socket)
 
 (defmodule Socket
+  (doc buf-size "is the size of the sockets’ read buffer.")
   (register buf-size Int)
+  (doc setup-client "setups a client socket.")
   (register setup-client (Fn [&String Int] Socket))
+  (doc setup-client "setups a server socket.")
   (register setup-server (Fn [&String Int] Socket))
+  (doc valid? "checks whether a socket is valid.")
   (register valid? (Fn [&Socket] Bool))
+  (doc listen "listens on a socket for new connections.")
   (register listen (Fn [&Socket] ()))
+  (doc accept "accepts new connections, returning a new socket.")
   (register accept (Fn [&Socket] Socket))
+  (doc send "sends string data over a socket.")
   (register send (Fn [&Socket &String] ()))
-  (register send-bytes (Fn [&Socket (Array Byte)] ()))
+  (doc send-bytes "sends binary data over a socket.")
+  (register send-bytes (Fn [&Socket &(Array Byte)] ()))
+  (doc read "reads string data over a socket.")
   (register read (Fn [&Socket] String))
+  (doc read-bytes "reads binary data over a socket.")
+  (register read-bytes (Fn [&Socket] (Array Byte)))
+  (doc close "closes a socket.")
   (register close (Fn [Socket] ()))
 
   (defmacro with-client [name host port :rest forms]

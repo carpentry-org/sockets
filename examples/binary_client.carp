@@ -1,0 +1,10 @@
+(load "sockets.carp")
+(use Socket)
+
+(defn main []
+  (Socket.with-client sock "127.0.0.1" 8080
+    (if (Socket.valid? &sock)
+      (do
+        (send-bytes &sock &[1b 2b 3b])
+        (IO.println &(str &(read-bytes &sock))))
+      (IO.errorln "client couldn’t be started."))))
