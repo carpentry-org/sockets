@@ -1,7 +1,58 @@
 (relative-include "src/sockets.h")
 
 (register-type Socket)
+(doc Socket "is a simple wrapper around C sockets for Carp.
 
+## Usage
+
+Setting up a socket can be done through `setup-server` and
+`setup-client` or through the macros `with-server` and
+`with-client`.
+
+```clojure
+(let [sock (Socket.setup-server \"127.0.0.1\" 80)]
+  ; ... work with sock
+  )
+
+(let [sock (Socket.setup-client \"127.0.0.1\" 80)]
+  ; ...
+  )
+
+(Socket.with-server sock \"127.0.0.1\" 80
+  ; use sock as above
+  )
+
+(Socket.with-client sock \"127.0.0.1\" 80
+  ; use sock as above
+  )
+```
+
+After checking that they are valid using `Socket.valid?`, client sockets can
+`send` and `read` right away, whereas server sockets have to `listen` and
+`accept` first. Just like in C!
+
+Alternatively, you can also use the macro `with-connection` in the server, like
+so:
+
+```clojure
+(Socket.with-server server \"127.0.0.1\" 80
+  (Socket.with-connection &server client
+    (send &client \"nice to meet you!\")
+  )
+)
+```
+
+If you want a server that accepts connections forever, use `while-connection`:
+
+```clojure
+(Socket.with-server server \"127.0.0.1\" 80
+  (Socket.while-connection &server client
+    (send &client \"nice to meet you!\")
+  )
+)
+```
+
+This will never terminate, unless interrupted by the user or failure.")
 (defmodule Socket
   (doc buf-size "is the size of the sockets’ read buffer.")
   (register buf-size Int)
@@ -26,19 +77,35 @@
   (doc close "closes a socket.")
   (register close (Fn [Socket] ()))
 
+  (doc with-client "create a client socket named `name`, connecting to `host`
+and `port`, and then execute `forms`.
+
+This functions closes the socket automatically at the end.")
   (defmacro with-client [name host port :rest forms]
     (list 'let (array name (list 'Socket.setup-client host port))
       (cons-last (list 'Socket.close name) (cons 'do forms))))
 
+  (doc with-server "create a server socket named `name`, connecting to `host`
+and `port`, and then execute `forms`.
+
+This functions closes the socket automatically at the end.")
   (defmacro with-server [name host port :rest forms]
     (list 'let (array name (list 'Socket.setup-server host port))
       (cons-last (list 'Socket.close name) (cons 'do forms))))
 
+  (doc with-connection "create a connection socket from the server `from` to
+a socket named `to`, and then execute `forms`.
+
+This functions closes the socket automatically at the end.")
   (defmacro with-connection [from to :rest forms]
     (list 'do (list 'listen from)
       (list 'let (array to (list 'accept from))
         (cons-last (list 'Socket.close to) (cons 'do forms)))))
 
+  (doc while-connection "create a connection socket from the server `from` to
+a socket named `to`, and then execute `forms` forever.
+
+This functions closes the socket automatically at the end.")
   (defmacro while-connection [from to :rest forms]
     (list 'do (list 'listen from)
       (list 'while true

@@ -1,0 +1,383 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="http://github.com/carp-lang/Carp">
+                    <img src="logo.png">
+                </a>
+                <div class="title">
+                    sockets
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="Socket.html">
+                                Socket
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <h1>
+                Socket
+            </h1>
+            <div class="module-description">
+                <p>is a simple wrapper around C sockets for Carp.</p>
+<h2>Usage</h2>
+<p>Setting up a socket can be done through <code>setup-server</code> and
+<code>setup-client</code> or through the macros <code>with-server</code> and
+<code>with-client</code>.</p>
+<pre><code class="language-clojure">(let [sock (Socket.setup-server &quot;127.0.0.1&quot; 80)]
+  ; ... work with sock
+  )
+
+(let [sock (Socket.setup-client &quot;127.0.0.1&quot; 80)]
+  ; ...
+  )
+
+(Socket.with-server sock &quot;127.0.0.1&quot; 80
+  ; use sock as above
+  )
+
+(Socket.with-client sock &quot;127.0.0.1&quot; 80
+  ; use sock as above
+  )
+</code></pre>
+<p>After checking that they are valid using <code>Socket.valid?</code>, client sockets can
+<code>send</code> and <code>read</code> right away, whereas server sockets have to <code>listen</code> and
+<code>accept</code> first. Just like in C!</p>
+<p>Alternatively, you can also use the macro <code>with-connection</code> in the server, like
+so:</p>
+<pre><code class="language-clojure">(Socket.with-server server &quot;127.0.0.1&quot; 80
+  (Socket.with-connection &amp;server client
+    (send &amp;client &quot;nice to meet you!&quot;)
+  )
+)
+</code></pre>
+<p>If you want a server that accepts connections forever, use <code>while-connection</code>:</p>
+<pre><code class="language-clojure">(Socket.with-server server &quot;127.0.0.1&quot; 80
+  (Socket.while-connection &amp;server client
+    (send &amp;client &quot;nice to meet you!&quot;)
+  )
+)
+</code></pre>
+<p>This will never terminate, unless interrupted by the user or failure.</p>
+
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#accept">
+                    <h3 id="accept">
+                        accept
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket)] Socket)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>accepts new connections, returning a new socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#buf-size">
+                    <h3 id="buf-size">
+                        buf-size
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    Int
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>is the size of the sockets’ read buffer.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#close">
+                    <h3 id="close">
+                        close
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [Socket] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>closes a socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#listen">
+                    <h3 id="listen">
+                        listen
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket)] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>listens on a socket for new connections.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#read">
+                    <h3 id="read">
+                        read
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket)] String)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>reads string data over a socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#read-bytes">
+                    <h3 id="read-bytes">
+                        read-bytes
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket)] (Array Byte))
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>reads binary data over a socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#send">
+                    <h3 id="send">
+                        send
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket), &amp;String] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>sends string data over a socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#send-bytes">
+                    <h3 id="send-bytes">
+                        send-bytes
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket), (Ref (Array Byte))] ())
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>sends binary data over a socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#setup-client">
+                    <h3 id="setup-client">
+                        setup-client
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [&amp;String, Int] Socket)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>setups a server socket.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#setup-server">
+                    <h3 id="setup-server">
+                        setup-server
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [&amp;String, Int] Socket)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#valid?">
+                    <h3 id="valid?">
+                        valid?
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket)] Bool)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>checks whether a socket is valid.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#while-connection">
+                    <h3 id="while-connection">
+                        while-connection
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (while-connection from to :rest forms)
+                </pre>
+                <p class="doc">
+                    <p>create a connection socket from the server <code>from</code> to
+a socket named <code>to</code>, and then execute <code>forms</code> forever.</p>
+<p>This functions closes the socket automatically at the end.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#with-client">
+                    <h3 id="with-client">
+                        with-client
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (with-client name host port :rest forms)
+                </pre>
+                <p class="doc">
+                    <p>create a client socket named <code>name</code>, connecting to <code>host</code>
+and <code>port</code>, and then execute <code>forms</code>.</p>
+<p>This functions closes the socket automatically at the end.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#with-connection">
+                    <h3 id="with-connection">
+                        with-connection
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (with-connection from to :rest forms)
+                </pre>
+                <p class="doc">
+                    <p>create a connection socket from the server <code>from</code> to
+a socket named <code>to</code>, and then execute <code>forms</code>.</p>
+<p>This functions closes the socket automatically at the end.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#with-server">
+                    <h3 id="with-server">
+                        with-server
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (with-server name host port :rest forms)
+                </pre>
+                <p class="doc">
+                    <p>create a server socket named <code>name</code>, connecting to <code>host</code>
+and <code>port</code>, and then execute <code>forms</code>.</p>
+<p>This functions closes the socket automatically at the end.</p>
+
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
