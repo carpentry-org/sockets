@@ -37,14 +37,14 @@ void Socket_send_MINUS_bytes(Socket* sock, Array* msg) {
 }
 
 String Socket_read(Socket* sock) {
-  String buf;
+  String buf = CARP_MALLOC(Socket_buf_MINUS_size);
   int r;
   int size = 0;
   while (1) {
-    String buf = realloc(buf, size+Socket_buf_MINUS_size);
     r = read(sock->socket, buf+size, Socket_buf_MINUS_size);
     if (r != Socket_buf_MINUS_size) break;
     size += Socket_buf_MINUS_size;
+    buf = realloc(buf, size);
   }
 
   return buf;
