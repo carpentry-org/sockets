@@ -38,8 +38,8 @@ void Socket_send_MINUS_bytes(Socket* sock, Array* msg) {
 
 String Socket_read(Socket* sock) {
   String buf = CARP_MALLOC(Socket_buf_MINUS_size+1);
-  read(sock->socket, buf, Socket_buf_MINUS_size);
-  buf[Socket_buf_MINUS_size] = '\0';
+  int r = read(sock->socket, buf, Socket_buf_MINUS_size);
+  buf[r] = '\0';
   return buf;
 }
 
