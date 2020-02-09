@@ -84,7 +84,7 @@ void Socket_close(Socket sock) {
 Socket Socket_copy(Socket* sock) {
   Socket res;
   res.socket = sock->socket;
-  res.valid = sock-valid;
+  res.valid = sock->valid;
   res.them = sock->them;
   return res;
 }
