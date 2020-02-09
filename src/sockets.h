@@ -80,3 +80,11 @@ Socket Socket_accept(Socket* sock) {
 void Socket_close(Socket sock) {
   close(sock.socket);
 }
+
+Socket Socket_copy(Socket* sock) {
+  Socket res;
+  res->socket = sock->socket;
+  res->valid = sock-valid;
+  res->them = sock->them;
+  return res;
+}

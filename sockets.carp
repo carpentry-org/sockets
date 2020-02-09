@@ -76,6 +76,7 @@ This will never terminate, unless interrupted by the user or failure.")
   (register read-bytes (Fn [&Socket] (Array Byte)))
   (doc close "closes a socket.")
   (register close (Fn [Socket] ()))
+  (register copy (Fn [&Socket] Socket))
 
   (doc with-client "create a client socket named `name`, connecting to `host`
 and `port`, and then execute `forms`.
