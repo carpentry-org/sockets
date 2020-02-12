@@ -81,7 +81,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket)] Socket)
+                    (λ [(Ref Socket a)] Socket)
                 </p>
                 <span>
                     
@@ -132,6 +132,25 @@ so:</p>
                 </p>
             </div>
             <div class="binder">
+                <a class="anchor" href="#copy">
+                    <h3 id="copy">
+                        copy
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref Socket a)] Socket)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
                 <a class="anchor" href="#listen">
                     <h3 id="listen">
                         listen
@@ -141,7 +160,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket)] ())
+                    (λ [(Ref Socket a)] ())
                 </p>
                 <span>
                     
@@ -161,7 +180,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket)] String)
+                    (λ [(Ref Socket a)] String)
                 </p>
                 <span>
                     
@@ -181,7 +200,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket)] (Array Byte))
+                    (λ [(Ref Socket a)] (Array Byte))
                 </p>
                 <span>
                     
@@ -201,7 +220,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket), &amp;String] ())
+                    (λ [(Ref Socket a), (Ref String b)] ())
                 </p>
                 <span>
                     
@@ -221,7 +240,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket), (Ref (Array Byte))] ())
+                    (λ [(Ref Socket a), (Ref (Array Byte) b)] ())
                 </p>
                 <span>
                     
@@ -241,14 +260,36 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [&amp;String, Int] Socket)
+                    (λ [(Ref String a), Int] Socket)
                 </p>
                 <span>
                     
                 </span>
                 <p class="doc">
-                    <p>setups a server socket.</p>
+                    <p>setup a client socket to a host using a protocol.</p>
+<p>Example:</p>
+<pre><code>(Socket.setup-client-for &quot;httpbin.org&quot; &quot;http&quot; 80)
+</code></pre>
 
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#setup-client-for">
+                    <h3 id="setup-client-for">
+                        setup-client-for
+                    </h3>
+                </a>
+                <div class="description">
+                    external
+                </div>
+                <p class="sig">
+                    (λ [(Ref String a), (Ref String b), Int] Socket)
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    
                 </p>
             </div>
             <div class="binder">
@@ -261,13 +302,14 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [&amp;String, Int] Socket)
+                    (λ [(Ref String a), Int] Socket)
                 </p>
                 <span>
                     
                 </span>
                 <p class="doc">
-                    
+                    <p>setup a server socket.</p>
+
                 </p>
             </div>
             <div class="binder">
@@ -280,7 +322,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket)] Bool)
+                    (λ [(Ref Socket a)] Bool)
                 </p>
                 <span>
                     

@@ -28,6 +28,27 @@ Socket Socket_setup_MINUS_client(String* addr, int port) {
   return ret;
 }
 
+Socket Socket_setup_MINUS_client_MINUS_for(String* addr, String* proto, int port) {
+  Socket ret;
+  struct addrinfo* result;
+  struct addrinfo* rp;
+
+  ret.them.sin_family = AF_INET;
+  ret.them.sin_port = htons(port);
+
+  ret.valid = (getaddrinfo(addr, proto, NULL, &res)) == 0;
+  if (!ret.valid) return res;
+
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    ret.socket = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+    ret.valid = connect(ret.socket, (struct sockaddr*)&(ret.them), sizeof(ret.them)) == 0;
+    if (ret.valid) break;
+  }
+
+  return ret;
+}
+
 void Socket_send(Socket* sock, String* msg) {
   send(sock->socket, *msg, strlen(*msg), 0);
 }

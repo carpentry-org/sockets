@@ -56,9 +56,16 @@ This will never terminate, unless interrupted by the user or failure.")
 (defmodule Socket
   (doc buf-size "is the size of the sockets’ read buffer.")
   (register buf-size Int)
-  (doc setup-client "setups a client socket.")
+  (doc setup-client "setup a client socket.")
   (register setup-client (Fn [&String Int] Socket))
-  (doc setup-client "setups a server socket.")
+  (doc setup-client "setup a client socket to a host using a protocol.
+
+Example:
+```
+(Socket.setup-client-for \"httpbin.org\" \"http\" 80)
+```")
+  (register setup-client-for (Fn [&String &String Int] Socket))
+  (doc setup-server "setup a server socket.")
   (register setup-server (Fn [&String Int] Socket))
   (doc valid? "checks whether a socket is valid.")
   (register valid? (Fn [&Socket] Bool))
