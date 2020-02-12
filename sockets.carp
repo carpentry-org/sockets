@@ -93,6 +93,14 @@ This functions closes the socket automatically at the end.")
     (list 'let (array name (list 'Socket.setup-client host port))
       (cons-last (list 'Socket.close name) (cons 'do forms))))
 
+  (doc with-client-for "create a client socket named `name`, connecting to
+`host` and `port` using protocol `proto`, and then execute `forms`.
+
+This functions closes the socket automatically at the end.")
+  (defmacro with-client-for [name host proto port :rest forms]
+    (list 'let (array name (list 'Socket.setup-client-for host proto port))
+      (cons-last (list 'Socket.close name) (cons 'do forms))))
+
   (doc with-server "create a server socket named `name`, connecting to `host`
 and `port`, and then execute `forms`.
 
