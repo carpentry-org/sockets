@@ -1,6 +1,5 @@
 (relative-include "src/sockets.h")
 
-(register-type Socket)
 (doc Socket "is a simple wrapper around C sockets for Carp.
 
 ## Usage
@@ -53,6 +52,7 @@ If you want a server that accepts connections forever, use `while-connection`:
 ```
 
 This will never terminate, unless interrupted by the user or failure.")
+(register-type Socket)
 (defmodule Socket
   (doc buf-size "is the size of the sockets’ read buffer.")
   (register buf-size Int)

@@ -1,13 +1,10 @@
 (load "sockets.carp")
 
-(defndynamic gendocs []
-       (do
-         (Project.config "title" "sockets")
-         (Project.config "docs-directory" "./docs/")
-         (Project.config "docs-logo" "")
-         (Project.config "docs-styling" "style.css")
-         (Project.config "docs-generate-index" false)
-         (save-docs Socket)))
+(Project.config "title" "sockets")
+(Project.config "docs-directory" "./docs/")
+(Project.config "docs-logo" "")
+(Project.config "docs-styling" "../style.css")
+(Project.config "docs-generate-index" false)
+(save-docs Socket)
 
-(gendocs)
 (quit)

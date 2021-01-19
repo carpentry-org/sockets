@@ -4,13 +4,13 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="../style.css">
     </head>
     <body>
         <div class="content">
             <div class="logo">
-                <a href="http://github.com/carp-lang/Carp">
-                    <img src="logo.png">
+                <a href="">
+                    <img src="">
                 </a>
                 <div class="title">
                     sockets
@@ -81,7 +81,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] Socket)
+                    (Fn [(Ref Socket a)] Socket)
                 </p>
                 <span>
                     
@@ -121,7 +121,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [Socket] ())
+                    (Fn [Socket] ())
                 </p>
                 <span>
                     
@@ -141,7 +141,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] Socket)
+                    (Fn [(Ref Socket a)] Socket)
                 </p>
                 <span>
                     
@@ -160,7 +160,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] ())
+                    (Fn [(Ref Socket a)] ())
                 </p>
                 <span>
                     
@@ -180,7 +180,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] String)
+                    (Fn [(Ref Socket a)] String)
                 </p>
                 <span>
                     
@@ -200,7 +200,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] (Array Byte))
+                    (Fn [(Ref Socket a)] (Array Byte))
                 </p>
                 <span>
                     
@@ -220,7 +220,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a), (Ref String b)] ())
+                    (Fn [(Ref Socket a), (Ref String b)] ())
                 </p>
                 <span>
                     
@@ -240,7 +240,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a), (Ref (Array Byte) b)] ())
+                    (Fn [(Ref Socket a), (Ref (Array Byte) b)] ())
                 </p>
                 <span>
                     
@@ -260,7 +260,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref String a), Int] Socket)
+                    (Fn [(Ref String a), Int] Socket)
                 </p>
                 <span>
                     
@@ -283,7 +283,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref String a), (Ref String b), Int] Socket)
+                    (Fn [(Ref String a), (Ref String b), Int] Socket)
                 </p>
                 <span>
                     
@@ -302,7 +302,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref String a), Int] Socket)
+                    (Fn [(Ref String a), Int] Socket)
                 </p>
                 <span>
                     
@@ -322,7 +322,7 @@ so:</p>
                     external
                 </div>
                 <p class="sig">
-                    (λ [(Ref Socket a)] Bool)
+                    (Fn [(Ref Socket a)] Bool)
                 </p>
                 <span>
                     
@@ -372,6 +372,28 @@ a socket named <code>to</code>, and then execute <code>forms</code> forever.</p>
                 <p class="doc">
                     <p>create a client socket named <code>name</code>, connecting to <code>host</code>
 and <code>port</code>, and then execute <code>forms</code>.</p>
+<p>This functions closes the socket automatically at the end.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#with-client-for">
+                    <h3 id="with-client-for">
+                        with-client-for
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (with-client-for name host proto port :rest forms)
+                </pre>
+                <p class="doc">
+                    <p>create a client socket named <code>name</code>, connecting to
+<code>host</code> and <code>port</code> using protocol <code>proto</code>, and then execute <code>forms</code>.</p>
 <p>This functions closes the socket automatically at the end.</p>
 
                 </p>
