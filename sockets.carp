@@ -5,7 +5,7 @@
 ## Installation
 
 ```
-(load \"https://github.com/carpentry-org/sockets@0.0.1\")
+(load \"https://github.com/carpentry-org/sockets@0.0.2\")
 ```
 
 ## Usage
@@ -90,6 +90,7 @@ Example:
   (doc close "closes a socket.")
   (register close (Fn [Socket] ()))
   (register copy (Fn [&Socket] Socket))
+  (implements copy Socket.copy)
 
   (doc with-client "create a client socket named `name`, connecting to `host`
 and `port`, and then execute `forms`.

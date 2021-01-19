@@ -2,6 +2,12 @@
 
 A simple wrapper around C sockets for Carp.
 
+## Installation
+
+```
+(load \"https://github.com/carpentry-org/sockets@0.0.2\")
+```
+
 ## Usage
 
 Setting up a socket can be done through `setup-server` and
