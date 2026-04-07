@@ -1,0 +1,81 @@
+(relative-include "tcp_listener.h")
+
+(register-type TcpListener)
+
+(doc TcpListener "is a TCP server socket that listens for and accepts connections.
+
+## Usage
+```
+(match (TcpListener.bind \"0.0.0.0\" 8080)
+  (Result.Success listener)
+    (do
+      (println* \"Listening on port \" (TcpListener.local-port &listener))
+      (match (TcpListener.accept &listener)
+        (Result.Success client)
+          (do
+            (ignore (TcpStream.send &client \"hello!\\n\"))
+            (TcpStream.close client))
+        (Result.Error e) (IO.errorln &e))
+      (TcpListener.close listener))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule TcpListener
+  ; -- private C bindings --
+  (private bind-)
+  (hidden bind-)
+  (register bind- (Fn [&String Int] TcpListener) "TcpListener_bind_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&TcpListener] Int) "TcpListener_fd_")
+  (private accept-)
+  (hidden accept-)
+  (register accept- (Fn [&TcpListener] TcpStream) "TcpListener_accept_")
+
+  ; -- public API --
+
+  (doc bind "binds a TCP listener to the given address and port.
+The socket is set to reuse address/port and starts listening immediately.
+Returns `(Result TcpListener String)`.")
+  (defn bind [addr port]
+    (let [l (bind- addr port)]
+      (if (= (fd- &l) -1)
+        (Result.Error (System.error-text))
+        (Result.Success l))))
+
+  (doc accept "accepts a new TCP connection, returning a `TcpStream`.
+Blocks until a client connects. Returns `(Result TcpStream String)`.")
+  (defn accept [listener]
+    (let [s (accept- listener)]
+      (if (= (TcpStream.fd- &s) -1)
+        (Result.Error (System.error-text))
+        (Result.Success s))))
+
+  (register close (Fn [TcpListener] ()))
+  (doc close "closes the listener, releasing the file descriptor.")
+
+  (doc local-address "returns the IP address the listener is bound to.")
+  (register local-address (Fn [&TcpListener] String))
+
+  (doc local-port "returns the port the listener is bound to.
+Useful when binding to port 0 (OS-assigned).")
+  (register local-port (Fn [&TcpListener] Int))
+
+  (doc set-reuseaddr "enables or disables SO_REUSEADDR on the listener.")
+  (register set-reuseaddr (Fn [&TcpListener Int] ()))
+
+  (register copy (Fn [&TcpListener] TcpListener))
+  (implements copy TcpListener.copy)
+
+  (defn poll-fd [l] (fd- l))
+  (implements poll-fd TcpListener.poll-fd)
+
+  (doc while-accept "accepts connections in a loop. Binds each accepted stream
+to `name` and executes `forms`, then closes the stream. Loops forever.")
+  (defmacro while-accept [listener name :rest forms]
+    (list 'while true
+      (list 'match (list 'TcpListener.accept listener)
+        '(Result.Error _) '(break)
+        (list 'Result.Success name)
+          (cons-last (list 'TcpStream.close name) (cons 'do forms)))))
+)

@@ -1,0 +1,256 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="https://github.com/carpentry-org/socket">
+                    <img src="">
+                </a>
+                <div class="title">
+                    socket
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="TcpListener.html">
+                                TcpListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="TcpStream.html">
+                                TcpStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UdpSocket.html">
+                                UdpSocket
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixListener.html">
+                                UnixListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixStream.html">
+                                UnixStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="Poll.html">
+                                Poll
+                            </a>
+                        </li>
+                        <li>
+                            <a href="PollEvent.html">
+                                PollEvent
+                            </a>
+                        </li>
+                        <li>
+                            <a href="BufReader.html">
+                                BufReader
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module">
+                <h1>
+                    TcpListener
+                </h1>
+                <div class="module-description">
+                    
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#accept">
+                        <h3 id="accept">
+                            accept
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a)] (Result TcpStream String))
+                    </p>
+                    <pre class="args">
+                        (accept listener)
+                    </pre>
+                    <p class="doc">
+                        <p>accepts a new TCP connection, returning a <code>TcpStream</code>.
+Blocks until a client connects. Returns <code>(Result TcpStream String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#bind">
+                        <h3 id="bind">
+                            bind
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref String a), Int] (Result TcpListener String))
+                    </p>
+                    <pre class="args">
+                        (bind addr port)
+                    </pre>
+                    <p class="doc">
+                        <p>binds a TCP listener to the given address and port.
+The socket is set to reuse address/port and starts listening immediately.
+Returns <code>(Result TcpListener String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close">
+                        <h3 id="close">
+                            close
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [TcpListener] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the listener, releasing the file descriptor.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#copy">
+                        <h3 id="copy">
+                            copy
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a)] TcpListener)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#local-address">
+                        <h3 id="local-address">
+                            local-address
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a)] String)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>returns the IP address the listener is bound to.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#local-port">
+                        <h3 id="local-port">
+                            local-port
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a)] Int)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>returns the port the listener is bound to.
+Useful when binding to port 0 (OS-assigned).</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#poll-fd">
+                        <h3 id="poll-fd">
+                            poll-fd
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a)] Int)
+                    </p>
+                    <pre class="args">
+                        (poll-fd l)
+                    </pre>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-reuseaddr">
+                        <h3 id="set-reuseaddr">
+                            set-reuseaddr
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpListener a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>enables or disables SO_REUSEADDR on the listener.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#while-accept">
+                        <h3 id="while-accept">
+                            while-accept
+                        </h3>
+                    </a>
+                    <div class="description">
+                        macro
+                    </div>
+                    <p class="sig">
+                        Macro
+                    </p>
+                    <pre class="args">
+                        (while-accept listener name :rest forms)
+                    </pre>
+                    <p class="doc">
+                        <p>accepts connections in a loop. Binds each accepted stream
+to <code>name</code> and executes <code>forms</code>, then closes the stream. Loops forever.</p>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,10 +1,37 @@
 (load "sockets.carp")
 
-(Project.config "title" "sockets")
+(Project.config "title" "socket")
 (Project.config "docs-directory" "./docs/")
 (Project.config "docs-logo" "")
+(Project.config "docs-url" "https://github.com/carpentry-org/socket")
 (Project.config "docs-styling" "../style.css")
-(Project.config "docs-generate-index" false)
-(save-docs Socket)
+(Project.config "docs-prelude" "A networking library for Carp with TCP, UDP,
+Unix domain sockets, buffered I/O, and I/O multiplexing.
 
+All fallible operations return `(Result T String)`.
+
+### TCP
+```
+(match (TcpListener.bind \"0.0.0.0\" 8080)
+  (Result.Success listener)
+    (do
+      (TcpListener.while-accept &listener client
+        (ignore (TcpStream.send &client \"hello\\n\")))
+      (TcpListener.close listener))
+  (Result.Error e) (IO.errorln &e))
+```
+
+### I/O Multiplexing
+```
+(match (Poll.create)
+  (Result.Success poll)
+    (do (ignore (Poll.add-read &poll &listener))
+        (match (Poll.wait &poll 1000)
+          (Result.Success events) (println* (Array.length &events) \" events\")
+          _ ())
+        (Poll.close poll))
+  _ ())
+```")
+
+(save-docs TcpListener TcpStream UdpSocket UnixListener UnixStream Poll PollEvent BufReader)
 (quit)

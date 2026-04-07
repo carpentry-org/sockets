@@ -1,0 +1,184 @@
+(relative-include "tcp_stream.h")
+(relative-include "tcp_bufio.h")
+
+(register-type TcpStream)
+
+(doc TcpStream "is a connected TCP stream, used for both client connections
+and accepted server connections.
+
+## Client usage
+```
+(match (TcpStream.connect \"127.0.0.1\" 8080)
+  (Result.Success s)
+    (do
+      (ignore (TcpStream.send &s \"hello\"))
+      (match (TcpStream.read &s)
+        (Result.Success msg) (println* &msg)
+        (Result.Error e) (IO.errorln &e))
+      (TcpStream.close s))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule TcpStream
+  ; -- private C bindings --
+  (private connect-)
+  (hidden connect-)
+  (register connect- (Fn [&String Int] TcpStream) "TcpStream_connect_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&TcpStream] Int) "TcpStream_fd_")
+  (private send-)
+  (hidden send-)
+  (register send- (Fn [&TcpStream &String] Int) "TcpStream_send_")
+  (private send-bytes-)
+  (hidden send-bytes-)
+  (register send-bytes- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_send_MINUS_bytes_")
+  (private send-len-)
+  (hidden send-len-)
+  (register send-len- (Fn [&TcpStream &String Int] Int) "TcpStream_send_MINUS_len_")
+  (private read-)
+  (hidden read-)
+  (register read- (Fn [&TcpStream] String) "TcpStream_read_")
+  (private read-bytes-)
+  (hidden read-bytes-)
+  (register read-bytes- (Fn [&TcpStream] (Array Byte)) "TcpStream_read_MINUS_bytes_")
+  (private read-append-)
+  (hidden read-append-)
+  (register read-append- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_read_MINUS_append_")
+
+  ; -- public API --
+
+  (doc connect "connects to a remote TCP address. Returns `(Result TcpStream String)`.")
+  (defn connect [addr port]
+    (let [s (connect- addr port)]
+      (if (= (fd- &s) -1)
+        (Result.Error (System.error-text))
+        (Result.Success s))))
+
+  (doc send "sends a string over the stream. Returns bytes sent or an error.")
+  (defn send [stream msg]
+    (let [n (send- stream msg)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc send-bytes "sends binary data over the stream. Returns bytes sent or an error.")
+  (defn send-bytes [stream data]
+    (let [n (send-bytes- stream data)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc send-len "sends a string with known length (avoids strlen). Returns bytes sent or an error.")
+  (defn send-len [stream msg len]
+    (let [n (send-len- stream msg len)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc read "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
+Returns an empty string on connection close.")
+  (defn read [stream]
+    (let [s (read- stream)]
+      (Result.Success s)))
+
+  (doc read-bytes "reads up to 4096 bytes as a byte array.")
+  (defn read-bytes [stream]
+    (Result.Success (read-bytes- stream)))
+
+  (doc read-append "reads from the stream and appends to an existing byte buffer.
+Returns bytes read (0 = connection closed), or an error.")
+  (defn read-append [stream buf]
+    (let [n (read-append- stream buf)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc clear-buf "resets a byte buffer's length to zero without freeing memory.")
+  (register clear-buf (Fn [&(Array Byte)] ()))
+
+  (register close (Fn [TcpStream] ()))
+  (doc close "closes the stream, consuming it.")
+
+  (doc close! "closes the stream by reference, for use when the stream lives
+in a collection. Sets the fd to -1 to prevent double-close.")
+  (register close! (Fn [&TcpStream] ()) "TcpStream_close_MINUS_ref")
+
+  (doc shutdown "shuts down the stream. 0 = reads, 1 = writes, 2 = both.")
+  (register shutdown- (Fn [&TcpStream Int] ()) "TcpStream_shutdown_")
+  (defn shutdown [stream how] (shutdown- stream how))
+
+  (doc shutdown-read "shuts down the read side of the stream.")
+  (register shutdown-read (Fn [&TcpStream] ()))
+
+  (doc shutdown-write "shuts down the write side of the stream.")
+  (register shutdown-write (Fn [&TcpStream] ()))
+
+  (doc set-nodelay "disables Nagle's algorithm for lower latency.")
+  (register set-nodelay (Fn [&TcpStream] ()))
+
+  (doc set-timeout "sets read and write timeouts in seconds.")
+  (register set-timeout (Fn [&TcpStream Int] ()))
+
+  (doc set-read-timeout "sets the read timeout in seconds.")
+  (register set-read-timeout (Fn [&TcpStream Int] ()))
+
+  (doc set-keepalive "enables or disables TCP keep-alive.")
+  (register set-keepalive (Fn [&TcpStream Int] ()))
+
+  (doc set-linger "sets the linger timeout in seconds. Pass -1 to disable linger.")
+  (register set-linger (Fn [&TcpStream Int] ()))
+
+  (doc set-send-buffer "sets the send buffer size in bytes.")
+  (register set-send-buffer (Fn [&TcpStream Int] ()))
+
+  (doc set-recv-buffer "sets the receive buffer size in bytes.")
+  (register set-recv-buffer (Fn [&TcpStream Int] ()))
+
+  (doc connect-timeout "connects with a timeout in seconds. Returns `(Result TcpStream String)`.")
+  (private connect-timeout-)
+  (hidden connect-timeout-)
+  (register connect-timeout- (Fn [&String Int Int] TcpStream) "TcpStream_connect_MINUS_timeout_")
+  (defn connect-timeout [addr port timeout]
+    (let [s (connect-timeout- addr port timeout)]
+      (if (= (fd- &s) -1)
+        (Result.Error (System.error-text))
+        (Result.Success s))))
+
+  (doc peer-address "returns the IP address of the remote peer.")
+  (register peer-address (Fn [&TcpStream] String))
+
+  (doc peer-port "returns the port of the remote peer.")
+  (register peer-port (Fn [&TcpStream] Int))
+
+  (register copy (Fn [&TcpStream] TcpStream))
+  (implements copy TcpStream.copy)
+
+  (defn poll-fd [s] (fd- s))
+  (implements poll-fd TcpStream.poll-fd)
+
+  (doc buffered "wraps this TcpStream in a BufReader for buffered I/O.
+Takes ownership of the stream — the BufReader will close it when deleted.
+
+```
+(match (TcpStream.connect \"example.com\" 80)
+  (Result.Success s)
+    (let [br (TcpStream.buffered s)]
+      (do
+        (BufReader.write &br \"GET / HTTP/1.0\\r\\n\\r\\n\")
+        (ignore (BufReader.flush &br))
+        (match (BufReader.read-line &br)
+          (Result.Success line) (println* &line)
+          _ ())
+        (BufReader.delete br)))
+  _ ())
+```")
+  (register buffered (Fn [TcpStream] BufReader))
+
+  (doc with-stream "connects, executes forms, then closes the stream.")
+  (defmacro with-stream [name addr port :rest forms]
+    (list 'match (list 'TcpStream.connect addr port)
+      (list 'Result.Error 'err) '(Result.Error err)
+      (list 'Result.Success name)
+        (cons-last (list 'TcpStream.close name) (cons 'do forms))))
+)

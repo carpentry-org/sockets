@@ -1,0 +1,96 @@
+(load "Test.carp")
+(load "../sockets.carp")
+(use Test)
+
+(defn tcp-roundtrip []
+  (match (TcpListener.bind "127.0.0.1" 0) ; port 0 = OS assigns
+    (Result.Error _) false
+    (Result.Success listener)
+      (let [port (TcpListener.local-port &listener)]
+        (match (TcpStream.connect "127.0.0.1" port)
+          (Result.Error _) (do (TcpListener.close listener) false)
+          (Result.Success client)
+            (match (TcpListener.accept &listener)
+              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Success conn)
+                (do
+                  (ignore (TcpStream.send &client "ping"))
+                  (match (the (Result String String) (TcpStream.read &conn))
+                    (Result.Success msg)
+                      (let [ok (= &msg "ping")]
+                        (do
+                          (ignore (TcpStream.send &conn "pong"))
+                          (match (the (Result String String) (TcpStream.read &client))
+                            (Result.Success reply)
+                              (let [ok2 (and ok (= &reply "pong"))]
+                                (do (TcpStream.close conn) (TcpStream.close client)
+                                    (TcpListener.close listener) ok2))
+                            _ (do (TcpStream.close conn) (TcpStream.close client)
+                                  (TcpListener.close listener) false))))
+                    _ (do (TcpStream.close conn) (TcpStream.close client)
+                          (TcpListener.close listener) false))))))))
+
+(defn tcp-peer-info []
+  (match (TcpListener.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success listener)
+      (let [port (TcpListener.local-port &listener)]
+        (match (TcpStream.connect "127.0.0.1" port)
+          (Result.Error _) (do (TcpListener.close listener) false)
+          (Result.Success client)
+            (match (TcpListener.accept &listener)
+              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Success conn)
+                (let [addr (TcpStream.peer-address &conn)
+                      ok (= &addr "127.0.0.1")]
+                  (do (TcpStream.close conn) (TcpStream.close client)
+                      (TcpListener.close listener) ok)))))))
+
+(defn bufstream-test []
+  (match (TcpListener.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success listener)
+      (let [port (TcpListener.local-port &listener)]
+        (match (TcpStream.connect "127.0.0.1" port)
+          (Result.Error _) (do (TcpListener.close listener) false)
+          (Result.Success client)
+            (match (TcpListener.accept &listener)
+              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Success conn)
+                (let [bs (TcpStream.buffered conn)]
+                  (do
+                    (ignore (TcpStream.send &client "line one\nline two\n"))
+                    (let [result (match (BufReader.read-line &bs)
+                                   (Result.Success line) (= &line "line one\n")
+                                   _ false)]
+                      (do
+                        (TcpStream.close client)
+                        (BufReader.delete bs)
+                        (TcpListener.close listener)
+                        result)))))))))
+
+(deftest test
+  (assert-true test
+    (match (TcpListener.bind "127.0.0.1" 0)
+      (Result.Success l) (do (TcpListener.close l) true)
+      _ false)
+    "TcpListener.bind succeeds on port 0")
+
+  (assert-true test
+    (match (TcpStream.connect "127.0.0.1" 1)
+      (Result.Error _) true
+      _ false)
+    "TcpStream.connect fails when nothing listening")
+
+  (assert-true test
+    (tcp-roundtrip)
+    "TCP roundtrip: send ping, receive pong")
+
+  (assert-true test
+    (tcp-peer-info)
+    "peer-address returns 127.0.0.1 for loopback")
+
+  (assert-true test
+    (bufstream-test)
+    "BufReader.read-line reads a line correctly")
+)

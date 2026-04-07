@@ -1,63 +1,143 @@
-# sockets
+# socket
 
-A simple wrapper around C sockets for Carp.
+A networking library for Carp with TCP, UDP, Unix domain sockets, buffered I/O,
+and I/O multiplexing.
 
 ## Installation
 
-```
-(load \"https://github.com/carpentry-org/sockets@0.0.2\")
+```clojure
+(load "git@github.com:carpentry-org/socket@0.1.0")
 ```
 
 ## Usage
 
-Setting up a socket can be done through `setup-server` and
-`setup-client` or through the macros `with-server` and
-`with-client`.
+### TCP Server
 
 ```clojure
-(let [sock (Socket.setup-server "127.0.0.1" 80)]
-  ; ... work with sock
-  )
-
-(let [sock (Socket.setup-client "127.0.0.1" 80)]
-  ; ...
-  )
-
-(Socket.with-server sock "127.0.0.1" 80
-  ; use sock as above
-  )
-
-(Socket.with-client sock "127.0.0.1" 80
-  ; use sock as above
-  )
+(match (TcpListener.bind "0.0.0.0" 8080)
+  (Result.Success listener)
+    (do
+      (TcpListener.while-accept &listener client
+        (match (TcpStream.read &client)
+          (Result.Success msg) (ignore (TcpStream.send &client &msg))
+          _ ()))
+      (TcpListener.close listener))
+  (Result.Error e) (IO.errorln &e))
 ```
 
-After checking that they are valid using `Socket.valid?`, client sockets can
-`send` and `read` right away, whereas server sockets have to `listen` and
-`accept` first. Just like in C!
-
-Alternatively, you can also use the macro `with-connection` in the server, like
-so:
+### TCP Client
 
 ```clojure
-(Socket.with-server server "127.0.0.1" 80
-  (Socket.with-connection &server client
-    (send &client "nice to meet you!")
-  )
-)
+(match (TcpStream.connect "example.com" 80)
+  (Result.Success s)
+    (do
+      (ignore (TcpStream.send &s "GET / HTTP/1.0\r\n\r\n"))
+      (match (TcpStream.read &s)
+        (Result.Success data) (println* &data)
+        _ ())
+      (TcpStream.close s))
+  (Result.Error e) (IO.errorln &e))
 ```
 
-If you want a server that accepts connections forever, use `while-connection`:
+### Buffered I/O
+
+Wrap any `TcpStream` in a `BufReader` for line-oriented reading:
 
 ```clojure
-(Socket.with-server server "127.0.0.1" 80
-  (Socket.while-connection &server client
-    (send &client "nice to meet you!")
-  )
-)
+(match (TcpStream.connect "example.com" 80)
+  (Result.Success s)
+    (let [br (TcpStream.buffered s)]
+      (do
+        (BufReader.write &br "GET / HTTP/1.0\r\nHost: example.com\r\n\r\n")
+        (ignore (BufReader.flush &br))
+        (match (BufReader.read-line &br)
+          (Result.Success line) (println* &line)
+          _ ())
+        (BufReader.delete br)))
+  _ ())
 ```
 
-This will never terminate, unless interrupted by the user or failure.
+### UDP
+
+```clojure
+(match (UdpSocket.bind "0.0.0.0" 9999)
+  (Result.Success sock)
+    (do
+      (ignore (UdpSocket.send-to &sock "127.0.0.1" 9999 &data))
+      (match (UdpSocket.recv-from &sock)
+        (Result.Success p)
+          (println* "from " (Pair.b &p) ": " (Array.length (Pair.a &p)) " bytes")
+        _ ())
+      (UdpSocket.close sock))
+  _ ())
+```
+
+### Unix Domain Sockets
+
+```clojure
+(match (UnixListener.bind "/tmp/my.sock")
+  (Result.Success listener)
+    (do
+      (UnixListener.while-accept &listener client
+        (ignore (UnixStream.send &client "hello")))
+      (UnixListener.close listener))
+  _ ())
+```
+
+### I/O Multiplexing
+
+Monitor multiple sockets for readiness using kqueue (macOS) or epoll (Linux):
+
+```clojure
+(match (Poll.create)
+  (Result.Success poll)
+    (do
+      (ignore (Poll.add-read &poll &listener))
+      (match (Poll.wait &poll 1000)
+        (Result.Success events)
+          (for [i 0 (Array.length &events)]
+            (let [e (Array.unsafe-nth &events i)]
+              (when (PollEvent.readable e)
+                (println* "fd " (PollEvent.fd e) " is readable"))))
+        _ ())
+      (Poll.close poll))
+  _ ())
+```
+
+## Types
+
+| Type | Purpose |
+|------|---------|
+| `TcpListener` | Bind, listen, accept TCP connections |
+| `TcpStream` | Connected TCP socket (send, read, keep-alive) |
+| `UdpSocket` | UDP datagram socket (send-to, recv-from) |
+| `UnixListener` | Unix domain socket server |
+| `UnixStream` | Unix domain socket connection |
+| `Poll` | I/O multiplexer (kqueue/epoll) |
+| `PollEvent` | Readiness notification from Poll |
+| `BufReader` | Buffered I/O (from the [bufio](https://github.com/carpentry-org/bufio) library) |
+
+All fallible operations return `(Result T String)`.
+
+## Socket Options
+
+```clojure
+(TcpStream.set-nodelay &s)         ; disable Nagle's algorithm
+(TcpStream.set-keepalive &s 1)     ; enable TCP keep-alive
+(TcpStream.set-timeout &s 30)      ; read/write timeout in seconds
+(TcpStream.set-linger &s 5)        ; linger on close for 5 seconds
+(TcpStream.set-send-buffer &s 65536)
+(TcpStream.set-recv-buffer &s 65536)
+(TcpStream.connect-timeout "host" 80 5) ; connect with 5s timeout
+```
+
+## Testing
+
+```
+carp -x test/tcp_test.carp
+carp -x test/unix_test.carp
+carp -x test/poll_test.carp
+```
 
 <hr/>
 

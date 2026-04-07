@@ -1,0 +1,77 @@
+(relative-include "udp_socket.h")
+
+(register-type UdpSocket)
+
+(doc UdpSocket "is a UDP datagram socket.
+
+## Usage
+```
+(match (UdpSocket.bind \"0.0.0.0\" 9999)
+  (Result.Success sock)
+    (do
+      (ignore (UdpSocket.send-to &sock \"127.0.0.1\" 9999 &data))
+      (match (UdpSocket.recv-from &sock)
+        (Result.Success p)
+          (println* \"got \" (Array.length (Pair.a &p)) \" bytes from \" (Pair.b &p))
+        (Result.Error e) (IO.errorln &e))
+      (UdpSocket.close sock))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule UdpSocket
+  ; -- private C bindings --
+  (private bind-)
+  (hidden bind-)
+  (register bind- (Fn [&String Int] UdpSocket) "UdpSocket_bind_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&UdpSocket] Int) "UdpSocket_fd_")
+  (private send-to-)
+  (hidden send-to-)
+  (register send-to- (Fn [&UdpSocket &String Int &(Array Byte)] Int) "UdpSocket_send_MINUS_to_")
+  (private recv-)
+  (hidden recv-)
+  (register recv- (Fn [&UdpSocket &(Array Byte) &String &Int] Int) "UdpSocket_recv_")
+
+  ; -- public API --
+
+  (doc bind "binds a UDP socket to the given address and port.
+Returns `(Result UdpSocket String)`.")
+  (defn bind [addr port]
+    (let [u (bind- addr port)]
+      (if (= (fd- &u) -1)
+        (Result.Error (System.error-text))
+        (Result.Success u))))
+
+  (doc send-to "sends data to a remote address. Returns bytes sent or an error.")
+  (defn send-to [sock host port data]
+    (let [n (send-to- sock host port data)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc recv-from "receives data and the sender's address.
+Returns `(Result (Pair (Array Byte) String) String)` where the string is
+the sender's address in `ip:port` format.")
+  (defn recv-from [sock]
+    (let-do [buf (the (Array Byte) (Array.allocate 4096))
+             sender @""
+             port 0
+             n (recv- sock &buf &sender &port)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success
+          (Pair.init buf (fmt "%s:%d" &sender port))))))
+
+  (register close (Fn [UdpSocket] ()))
+  (doc close "closes the UDP socket.")
+
+  (doc set-timeout "sets read and write timeouts in seconds.")
+  (register set-timeout (Fn [&UdpSocket Int] ()))
+
+  (register copy (Fn [&UdpSocket] UdpSocket))
+  (implements copy UdpSocket.copy)
+
+  (defn poll-fd [s] (fd- s))
+  (implements poll-fd UdpSocket.poll-fd)
+)

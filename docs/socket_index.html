@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="content">
+            <a href="https://github.com/carpentry-org/socket">
+                <div class="logo">
+                    <img src="" alt="Logo">
+                    <div class="index">
+                        <ul>
+                            <li>
+                                <a href="TcpListener.html">
+                                    TcpListener
+                                </a>
+                            </li>
+                            <li>
+                                <a href="TcpStream.html">
+                                    TcpStream
+                                </a>
+                            </li>
+                            <li>
+                                <a href="UdpSocket.html">
+                                    UdpSocket
+                                </a>
+                            </li>
+                            <li>
+                                <a href="UnixListener.html">
+                                    UnixListener
+                                </a>
+                            </li>
+                            <li>
+                                <a href="UnixStream.html">
+                                    UnixStream
+                                </a>
+                            </li>
+                            <li>
+                                <a href="Poll.html">
+                                    Poll
+                                </a>
+                            </li>
+                            <li>
+                                <a href="PollEvent.html">
+                                    PollEvent
+                                </a>
+                            </li>
+                            <li>
+                                <a href="BufReader.html">
+                                    BufReader
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <h1>
+                        socket
+                    </h1>
+                    <p>A networking library for Carp with TCP, UDP,
+Unix domain sockets, buffered I/O, and I/O multiplexing.</p>
+<p>All fallible operations return <code>(Result T String)</code>.</p>
+<h3>TCP</h3>
+<pre><code>(match (TcpListener.bind &quot;0.0.0.0&quot; 8080)
+  (Result.Success listener)
+    (do
+      (TcpListener.while-accept &amp;listener client
+        (ignore (TcpStream.send &amp;client &quot;hello\n&quot;)))
+      (TcpListener.close listener))
+  (Result.Error e) (IO.errorln &amp;e))
+</code></pre>
+<h3>I/O Multiplexing</h3>
+<pre><code>(match (Poll.create)
+  (Result.Success poll)
+    (do (ignore (Poll.add-read &amp;poll &amp;listener))
+        (match (Poll.wait &amp;poll 1000)
+          (Result.Success events) (println* (Array.length &amp;events) &quot; events&quot;)
+          _ ())
+        (Poll.close poll))
+  _ ())
+</code></pre>
+
+                </div>
+            </a>
+        </div>
+    </body>
+</html>

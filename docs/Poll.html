@@ -1,0 +1,294 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="https://github.com/carpentry-org/socket">
+                    <img src="">
+                </a>
+                <div class="title">
+                    socket
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="TcpListener.html">
+                                TcpListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="TcpStream.html">
+                                TcpStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UdpSocket.html">
+                                UdpSocket
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixListener.html">
+                                UnixListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixStream.html">
+                                UnixStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="Poll.html">
+                                Poll
+                            </a>
+                        </li>
+                        <li>
+                            <a href="PollEvent.html">
+                                PollEvent
+                            </a>
+                        </li>
+                        <li>
+                            <a href="BufReader.html">
+                                BufReader
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module">
+                <h1>
+                    Poll
+                </h1>
+                <div class="module-description">
+                    
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add">
+                        <h3 id="add">
+                            add
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), Int, Int] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (add poll fd interest)
+                    </pre>
+                    <p class="doc">
+                        <p>registers a file descriptor for the given interest flags.
+Use <code>poll-read</code>, <code>poll-write</code>, or <code>poll-read-write</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add-read">
+                        <h3 id="add-read">
+                            add-read
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), (Ref b c)] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (add-read poll fd)
+                    </pre>
+                    <p class="doc">
+                        <p>registers a file descriptor for read readiness.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add-read-write">
+                        <h3 id="add-read-write">
+                            add-read-write
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), (Ref b c)] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (add-read-write poll fd)
+                    </pre>
+                    <p class="doc">
+                        <p>registers a file descriptor for both read and write.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#add-write">
+                        <h3 id="add-write">
+                            add-write
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), (Ref b c)] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (add-write poll fd)
+                    </pre>
+                    <p class="doc">
+                        <p>registers a file descriptor for write readiness.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close">
+                        <h3 id="close">
+                            close
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [Poll] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the poll instance.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#copy">
+                        <h3 id="copy">
+                            copy
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a)] Poll)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#create">
+                        <h3 id="create">
+                            create
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [] (Result Poll String))
+                    </p>
+                    <pre class="args">
+                        (create)
+                    </pre>
+                    <p class="doc">
+                        <p>creates a new Poll instance. Returns <code>(Result Poll String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#modify">
+                        <h3 id="modify">
+                            modify
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), Int, Int] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (modify poll fd interest)
+                    </pre>
+                    <p class="doc">
+                        <p>changes the interest flags for an already-registered fd.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#remove">
+                        <h3 id="remove">
+                            remove
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), (Ref b c)] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (remove poll fd)
+                    </pre>
+                    <p class="doc">
+                        <p>stops monitoring a file descriptor.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#remove-fd">
+                        <h3 id="remove-fd">
+                            remove-fd
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), Int] (Result () String))
+                    </p>
+                    <pre class="args">
+                        (remove-fd poll fd)
+                    </pre>
+                    <p class="doc">
+                        <p>stops monitoring a raw file descriptor number.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#wait">
+                        <h3 id="wait">
+                            wait
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref Poll a), Int] (Result (Array PollEvent) b))
+                    </p>
+                    <pre class="args">
+                        (wait poll timeout-ms)
+                    </pre>
+                    <p class="doc">
+                        <p>waits for events, blocking up to <code>timeout-ms</code> milliseconds.
+Pass -1 to block indefinitely. Returns <code>(Result (Array PollEvent) String)</code>.</p>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

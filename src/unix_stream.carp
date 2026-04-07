@@ -1,0 +1,135 @@
+(relative-include "unix_stream.h")
+(relative-include "unix_bufio.h")
+
+(register-type UnixStream)
+
+(doc UnixStream "is a connected Unix domain stream socket.
+
+## Client usage
+```
+(match (UnixStream.connect \"/tmp/my.sock\")
+  (Result.Success s)
+    (do
+      (ignore (UnixStream.send &s \"hello\"))
+      (match (UnixStream.read &s)
+        (Result.Success msg) (println* &msg)
+        (Result.Error e) (IO.errorln &e))
+      (UnixStream.close s))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule UnixStream
+  ; -- private C bindings --
+  (private connect-)
+  (hidden connect-)
+  (register connect- (Fn [&String] UnixStream) "UnixStream_connect_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&UnixStream] Int) "UnixStream_fd_")
+  (private send-)
+  (hidden send-)
+  (register send- (Fn [&UnixStream &String] Int) "UnixStream_send_")
+  (private send-bytes-)
+  (hidden send-bytes-)
+  (register send-bytes- (Fn [&UnixStream &(Array Byte)] Int) "UnixStream_send_MINUS_bytes_")
+  (private read-)
+  (hidden read-)
+  (register read- (Fn [&UnixStream] String) "UnixStream_read_")
+  (private read-bytes-)
+  (hidden read-bytes-)
+  (register read-bytes- (Fn [&UnixStream] (Array Byte)) "UnixStream_read_MINUS_bytes_")
+  (private read-append-)
+  (hidden read-append-)
+  (register read-append- (Fn [&UnixStream &(Array Byte)] Int) "UnixStream_read_MINUS_append_")
+
+  ; -- public API --
+
+  (doc connect "connects to a Unix domain socket at the given path. Returns `(Result UnixStream String)`.")
+  (defn connect [path]
+    (let [s (connect- path)]
+      (if (= (fd- &s) -1)
+        (Result.Error (System.error-text))
+        (Result.Success s))))
+
+  (doc send "sends a string over the stream. Returns bytes sent or an error.")
+  (defn send [stream msg]
+    (let [n (send- stream msg)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc send-bytes "sends binary data over the stream. Returns bytes sent or an error.")
+  (defn send-bytes [stream data]
+    (let [n (send-bytes- stream data)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (doc read "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
+Returns an empty string on connection close.")
+  (defn read [stream]
+    (let [s (read- stream)]
+      (Result.Success s)))
+
+  (doc read-bytes "reads up to 4096 bytes as a byte array.")
+  (defn read-bytes [stream]
+    (Result.Success (read-bytes- stream)))
+
+  (doc read-append "reads from the stream and appends to an existing byte buffer.
+Returns bytes read (0 = connection closed), or an error.")
+  (defn read-append [stream buf]
+    (let [n (read-append- stream buf)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (register close (Fn [UnixStream] ()))
+  (doc close "closes the stream, releasing the file descriptor.")
+
+  (doc shutdown "shuts down the stream. 0 = reads, 1 = writes, 2 = both.")
+  (register shutdown- (Fn [&UnixStream Int] ()) "UnixStream_shutdown_")
+  (defn shutdown [stream how] (shutdown- stream how))
+
+  (doc shutdown-read "shuts down the read side of the stream.")
+  (register shutdown-read (Fn [&UnixStream] ()))
+
+  (doc shutdown-write "shuts down the write side of the stream.")
+  (register shutdown-write (Fn [&UnixStream] ()))
+
+  (doc set-timeout "sets read and write timeouts in seconds.")
+  (register set-timeout (Fn [&UnixStream Int] ()))
+
+  (doc peer-path "returns the path of the remote peer socket.")
+  (register peer-path (Fn [&UnixStream] String))
+
+  (register copy (Fn [&UnixStream] UnixStream))
+  (implements copy UnixStream.copy)
+
+  (defn poll-fd [s] (fd- s))
+  (implements poll-fd UnixStream.poll-fd)
+
+  (doc buffered "wraps this UnixStream in a BufReader for buffered I/O.
+Takes ownership of the stream — the BufReader will close it when deleted.
+
+```
+(match (UnixStream.connect \"/tmp/my.sock\")
+  (Result.Success s)
+    (let [br (UnixStream.buffered s)]
+      (do
+        (BufReader.write &br \"hello\\n\")
+        (ignore (BufReader.flush &br))
+        (match (BufReader.read-line &br)
+          (Result.Success line) (println* &line)
+          _ ())
+        (BufReader.delete br)))
+  _ ())
+```")
+  (register buffered (Fn [UnixStream] BufReader))
+
+  (doc with-stream "connects, executes forms, then closes the stream.")
+  (defmacro with-stream [name path :rest forms]
+    (list 'match (list 'UnixStream.connect path)
+      (list 'Result.Error 'err) '(Result.Error err)
+      (list 'Result.Success name)
+        (cons-last (list 'UnixStream.close name) (cons 'do forms))))
+)

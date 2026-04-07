@@ -1,0 +1,138 @@
+(relative-include "poll.h")
+
+; ---------------------------------------------------------------------------
+; Interface — implement for any type you want to use with Poll
+; ---------------------------------------------------------------------------
+
+; ---------------------------------------------------------------------------
+; PollEvent — result of a poll wait
+; ---------------------------------------------------------------------------
+
+(register-type PollEvent)
+
+(doc PollEvent "represents a readiness notification from `Poll.wait`.
+Check `readable`, `writable`, and `error?` to see what happened on `fd`.")
+
+(defmodule PollEvent
+  (register fd (Fn [&PollEvent] Int))
+  (register readable (Fn [&PollEvent] Bool))
+  (register writable (Fn [&PollEvent] Bool))
+  (doc error? "returns true if an error occurred on the fd.")
+  (register error? (Fn [&PollEvent] Bool))
+  (register copy (Fn [&PollEvent] PollEvent))
+  (implements copy PollEvent.copy)
+)
+
+; ---------------------------------------------------------------------------
+; Interest constants
+; ---------------------------------------------------------------------------
+
+(def poll-read 1)
+(def poll-write 2)
+(def poll-read-write 3)
+
+; ---------------------------------------------------------------------------
+; Poll — I/O multiplexer (kqueue on macOS, epoll on Linux)
+; ---------------------------------------------------------------------------
+
+(register-type Poll)
+
+(doc Poll "is an I/O event multiplexer that monitors multiple file descriptors
+for readiness. Uses kqueue on macOS/BSD and epoll on Linux.
+
+## Usage
+```
+(match (Poll.create)
+  (Result.Success poll)
+    (do
+      ; Watch a listener for incoming connections
+      (Poll.add-read &poll &listener)
+      ; Wait up to 1 second
+      (match (Poll.wait &poll 1000)
+        (Result.Success events)
+          (Array.for &events &(fn [e]
+            (when (PollEvent.readable e)
+              (println* \"fd \" (PollEvent.fd e) \" is readable\"))))
+        (Result.Error e) (IO.errorln &e))
+      (Poll.close poll))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule Poll
+  ; -- private C bindings --
+  (private create-)
+  (hidden create-)
+  (register create- (Fn [] Poll) "Poll_create_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&Poll] Int) "Poll_fd_")
+  (private add-)
+  (hidden add-)
+  (register add- (Fn [&Poll Int Int] Int) "Poll_add_")
+  (private modify-)
+  (hidden modify-)
+  (register modify- (Fn [&Poll Int Int] Int) "Poll_modify_")
+  (private remove-)
+  (hidden remove-)
+  (register remove- (Fn [&Poll Int] Int) "Poll_remove_")
+  (private wait-)
+  (hidden wait-)
+  (register wait- (Fn [&Poll Int] (Array PollEvent)) "Poll_wait_")
+
+  ; -- public API --
+
+  (doc create "creates a new Poll instance. Returns `(Result Poll String)`.")
+  (defn create []
+    (let [p (create-)]
+      (if (= (fd- &p) -1)
+        (Result.Error (System.error-text))
+        (Result.Success p))))
+
+  (doc add "registers a file descriptor for the given interest flags.
+Use `poll-read`, `poll-write`, or `poll-read-write`.")
+  (defn add [poll fd interest]
+    (if (= (add- poll fd interest) -1)
+      (Result.Error (System.error-text))
+      (Result.Success ())))
+
+  (doc add-read "registers a file descriptor for read readiness.")
+  (defn add-read [poll fd]
+    (add poll (poll-fd fd) poll-read))
+
+  (doc add-write "registers a file descriptor for write readiness.")
+  (defn add-write [poll fd]
+    (add poll (poll-fd fd) poll-write))
+
+  (doc add-read-write "registers a file descriptor for both read and write.")
+  (defn add-read-write [poll fd]
+    (add poll (poll-fd fd) poll-read-write))
+
+  (doc modify "changes the interest flags for an already-registered fd.")
+  (defn modify [poll fd interest]
+    (if (= (modify- poll fd interest) -1)
+      (Result.Error (System.error-text))
+      (Result.Success ())))
+
+  (doc remove "stops monitoring a file descriptor.")
+  (defn remove [poll fd]
+    (if (= (remove- poll (poll-fd fd)) -1)
+      (Result.Error (System.error-text))
+      (Result.Success ())))
+
+  (doc remove-fd "stops monitoring a raw file descriptor number.")
+  (defn remove-fd [poll fd]
+    (if (= (remove- poll fd) -1)
+      (Result.Error (System.error-text))
+      (Result.Success ())))
+
+  (doc wait "waits for events, blocking up to `timeout-ms` milliseconds.
+Pass -1 to block indefinitely. Returns `(Result (Array PollEvent) String)`.")
+  (defn wait [poll timeout-ms]
+    (Result.Success (wait- poll timeout-ms)))
+
+  (register close (Fn [Poll] ()))
+  (doc close "closes the poll instance.")
+
+  (register copy (Fn [&Poll] Poll))
+  (implements copy Poll.copy)
+)

@@ -1,0 +1,42 @@
+(load "Test.carp")
+(load "../sockets.carp")
+(use Test)
+
+(defn unix-roundtrip []
+  (let [path @"/tmp/carp_test_unix.sock"]
+    (match (UnixListener.bind &path)
+      (Result.Error _) false
+      (Result.Success listener)
+        (match (UnixStream.connect &path)
+          (Result.Error _) (do (UnixListener.close listener) false)
+          (Result.Success client)
+            (match (UnixListener.accept &listener)
+              (Result.Error _) (do (UnixStream.close client) (UnixListener.close listener) false)
+              (Result.Success conn)
+                (do
+                  (ignore (UnixStream.send &client "hello unix"))
+                  (match (the (Result String String) (UnixStream.read &conn))
+                    (Result.Success msg)
+                      (let [ok (= &msg "hello unix")]
+                        (do (UnixStream.close conn) (UnixStream.close client)
+                            (UnixListener.close listener) ok))
+                    _ (do (UnixStream.close conn) (UnixStream.close client)
+                          (UnixListener.close listener) false))))))))
+
+(deftest test
+  (assert-true test
+    (match (UnixListener.bind "/tmp/carp_test_unix2.sock")
+      (Result.Success l) (do (UnixListener.close l) true)
+      _ false)
+    "UnixListener.bind succeeds")
+
+  (assert-true test
+    (match (UnixStream.connect "/tmp/carp_nonexistent.sock")
+      (Result.Error _) true
+      _ false)
+    "UnixStream.connect fails on nonexistent path")
+
+  (assert-true test
+    (unix-roundtrip)
+    "Unix socket roundtrip: send and receive")
+)

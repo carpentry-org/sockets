@@ -1,0 +1,1 @@
+(definterface poll-fd (Fn [&a] Int))

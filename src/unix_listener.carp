@@ -1,0 +1,74 @@
+(relative-include "unix_listener.h")
+
+(register-type UnixListener)
+
+(doc UnixListener "is a Unix domain socket server that listens for and accepts connections.
+
+## Usage
+```
+(match (UnixListener.bind \"/tmp/my.sock\")
+  (Result.Success listener)
+    (do
+      (println* \"Listening on \" (UnixListener.path &listener))
+      (match (UnixListener.accept &listener)
+        (Result.Success client)
+          (do
+            (ignore (UnixStream.send &client \"hello!\\n\"))
+            (UnixStream.close client))
+        (Result.Error e) (IO.errorln &e))
+      (UnixListener.close listener))
+  (Result.Error e) (IO.errorln &e))
+```")
+
+(defmodule UnixListener
+  ; -- private C bindings --
+  (private bind-)
+  (hidden bind-)
+  (register bind- (Fn [&String] UnixListener) "UnixListener_bind_")
+  (private fd-)
+  (hidden fd-)
+  (register fd- (Fn [&UnixListener] Int) "UnixListener_fd_")
+  (private accept-)
+  (hidden accept-)
+  (register accept- (Fn [&UnixListener] UnixStream) "UnixListener_accept_")
+
+  ; -- public API --
+
+  (doc bind "binds a Unix domain socket listener to the given path.
+Unlinks any existing socket at that path first, then starts listening.
+Returns `(Result UnixListener String)`.")
+  (defn bind [path]
+    (let [l (bind- path)]
+      (if (= (fd- &l) -1)
+        (Result.Error (System.error-text))
+        (Result.Success l))))
+
+  (doc accept "accepts a new Unix domain connection, returning a `UnixStream`.
+Blocks until a client connects. Returns `(Result UnixStream String)`.")
+  (defn accept [listener]
+    (let [s (accept- listener)]
+      (if (= (UnixStream.fd- &s) -1)
+        (Result.Error (System.error-text))
+        (Result.Success s))))
+
+  (register close (Fn [UnixListener] ()))
+  (doc close "closes the listener, releasing the file descriptor and unlinking the socket path.")
+
+  (doc path "returns the path the listener is bound to.")
+  (register path (Fn [&UnixListener] String))
+
+  (register copy (Fn [&UnixListener] UnixListener))
+  (implements copy UnixListener.copy)
+
+  (defn poll-fd [l] (fd- l))
+  (implements poll-fd UnixListener.poll-fd)
+
+  (doc while-accept "accepts connections in a loop. Binds each accepted stream
+to `name` and executes `forms`, then closes the stream. Loops forever.")
+  (defmacro while-accept [listener name :rest forms]
+    (list 'while true
+      (list 'match (list 'UnixListener.accept listener)
+        '(Result.Error _) '(break)
+        (list 'Result.Success name)
+          (cons-last (list 'UnixStream.close name) (cons 'do forms)))))
+)

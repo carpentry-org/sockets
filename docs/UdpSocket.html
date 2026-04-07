@@ -1,0 +1,214 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="https://github.com/carpentry-org/socket">
+                    <img src="">
+                </a>
+                <div class="title">
+                    socket
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="TcpListener.html">
+                                TcpListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="TcpStream.html">
+                                TcpStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UdpSocket.html">
+                                UdpSocket
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixListener.html">
+                                UnixListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixStream.html">
+                                UnixStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="Poll.html">
+                                Poll
+                            </a>
+                        </li>
+                        <li>
+                            <a href="PollEvent.html">
+                                PollEvent
+                            </a>
+                        </li>
+                        <li>
+                            <a href="BufReader.html">
+                                BufReader
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module">
+                <h1>
+                    UdpSocket
+                </h1>
+                <div class="module-description">
+                    
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#bind">
+                        <h3 id="bind">
+                            bind
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref String a), Int] (Result UdpSocket String))
+                    </p>
+                    <pre class="args">
+                        (bind addr port)
+                    </pre>
+                    <p class="doc">
+                        <p>binds a UDP socket to the given address and port.
+Returns <code>(Result UdpSocket String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close">
+                        <h3 id="close">
+                            close
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [UdpSocket] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the UDP socket.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#copy">
+                        <h3 id="copy">
+                            copy
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a)] UdpSocket)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#poll-fd">
+                        <h3 id="poll-fd">
+                            poll-fd
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a)] Int)
+                    </p>
+                    <pre class="args">
+                        (poll-fd s)
+                    </pre>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#recv-from">
+                        <h3 id="recv-from">
+                            recv-from
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a)] (Result (Pair (Array Byte) String) String))
+                    </p>
+                    <pre class="args">
+                        (recv-from sock)
+                    </pre>
+                    <p class="doc">
+                        <p>receives data and the sender's address.
+Returns <code>(Result (Pair (Array Byte) String) String)</code> where the string is
+the sender's address in <code>ip:port</code> format.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send-to">
+                        <h3 id="send-to">
+                            send-to
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a), (Ref String b), Int, (Ref (Array Byte) c)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-to sock host port data)
+                    </pre>
+                    <p class="doc">
+                        <p>sends data to a remote address. Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-timeout">
+                        <h3 id="set-timeout">
+                            set-timeout
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets read and write timeouts in seconds.</p>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

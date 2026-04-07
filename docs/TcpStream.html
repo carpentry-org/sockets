@@ -1,0 +1,646 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="https://github.com/carpentry-org/socket">
+                    <img src="">
+                </a>
+                <div class="title">
+                    socket
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="TcpListener.html">
+                                TcpListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="TcpStream.html">
+                                TcpStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UdpSocket.html">
+                                UdpSocket
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixListener.html">
+                                UnixListener
+                            </a>
+                        </li>
+                        <li>
+                            <a href="UnixStream.html">
+                                UnixStream
+                            </a>
+                        </li>
+                        <li>
+                            <a href="Poll.html">
+                                Poll
+                            </a>
+                        </li>
+                        <li>
+                            <a href="PollEvent.html">
+                                PollEvent
+                            </a>
+                        </li>
+                        <li>
+                            <a href="BufReader.html">
+                                BufReader
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module">
+                <h1>
+                    TcpStream
+                </h1>
+                <div class="module-description">
+                    
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#buffered">
+                        <h3 id="buffered">
+                            buffered
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [TcpStream] BufReader)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>wraps this TcpStream in a BufReader for buffered I/O.
+Takes ownership of the stream — the BufReader will close it when deleted.</p>
+<pre><code>(match (TcpStream.connect &quot;example.com&quot; 80)
+  (Result.Success s)
+    (let [br (TcpStream.buffered s)]
+      (do
+        (BufReader.write &amp;br &quot;GET / HTTP/1.0\r\n\r\n&quot;)
+        (ignore (BufReader.flush &amp;br))
+        (match (BufReader.read-line &amp;br)
+          (Result.Success line) (println* &amp;line)
+          _ ())
+        (BufReader.delete br)))
+  _ ())
+</code></pre>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#clear-buf">
+                        <h3 id="clear-buf">
+                            clear-buf
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref (Array Byte) a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>resets a byte buffer's length to zero without freeing memory.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close">
+                        <h3 id="close">
+                            close
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [TcpStream] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the stream, consuming it.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close!">
+                        <h3 id="close!">
+                            close!
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the stream by reference, for use when the stream lives
+in a collection. Sets the fd to -1 to prevent double-close.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#connect">
+                        <h3 id="connect">
+                            connect
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref String a), Int] (Result TcpStream String))
+                    </p>
+                    <pre class="args">
+                        (connect addr port)
+                    </pre>
+                    <p class="doc">
+                        <p>connects to a remote TCP address. Returns <code>(Result TcpStream String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#connect-timeout">
+                        <h3 id="connect-timeout">
+                            connect-timeout
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref String a), Int, Int] (Result TcpStream String))
+                    </p>
+                    <pre class="args">
+                        (connect-timeout addr port timeout)
+                    </pre>
+                    <p class="doc">
+                        <p>connects with a timeout in seconds. Returns <code>(Result TcpStream String)</code>.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#copy">
+                        <h3 id="copy">
+                            copy
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] TcpStream)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#peer-address">
+                        <h3 id="peer-address">
+                            peer-address
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] String)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>returns the IP address of the remote peer.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#peer-port">
+                        <h3 id="peer-port">
+                            peer-port
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] Int)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>returns the port of the remote peer.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#poll-fd">
+                        <h3 id="poll-fd">
+                            poll-fd
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] Int)
+                    </p>
+                    <pre class="args">
+                        (poll-fd s)
+                    </pre>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read">
+                        <h3 id="read">
+                            read
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] (Result String b))
+                    </p>
+                    <pre class="args">
+                        (read stream)
+                    </pre>
+                    <p class="doc">
+                        <p>reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
+Returns an empty string on connection close.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read-append">
+                        <h3 id="read-append">
+                            read-append
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref (Array Byte) b)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (read-append stream buf)
+                    </pre>
+                    <p class="doc">
+                        <p>reads from the stream and appends to an existing byte buffer.
+Returns bytes read (0 = connection closed), or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read-bytes">
+                        <h3 id="read-bytes">
+                            read-bytes
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] (Result (Array Byte) b))
+                    </p>
+                    <pre class="args">
+                        (read-bytes stream)
+                    </pre>
+                    <p class="doc">
+                        <p>reads up to 4096 bytes as a byte array.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send">
+                        <h3 id="send">
+                            send
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref String b)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send stream msg)
+                    </pre>
+                    <p class="doc">
+                        <p>sends a string over the stream. Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send-bytes">
+                        <h3 id="send-bytes">
+                            send-bytes
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref (Array Byte) b)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-bytes stream data)
+                    </pre>
+                    <p class="doc">
+                        <p>sends binary data over the stream. Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send-len">
+                        <h3 id="send-len">
+                            send-len
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref String b), Int] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-len stream msg len)
+                    </pre>
+                    <p class="doc">
+                        <p>sends a string with known length (avoids strlen). Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-keepalive">
+                        <h3 id="set-keepalive">
+                            set-keepalive
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>enables or disables TCP keep-alive.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-linger">
+                        <h3 id="set-linger">
+                            set-linger
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets the linger timeout in seconds. Pass -1 to disable linger.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-nodelay">
+                        <h3 id="set-nodelay">
+                            set-nodelay
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>disables Nagle's algorithm for lower latency.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-read-timeout">
+                        <h3 id="set-read-timeout">
+                            set-read-timeout
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets the read timeout in seconds.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-recv-buffer">
+                        <h3 id="set-recv-buffer">
+                            set-recv-buffer
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets the receive buffer size in bytes.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-send-buffer">
+                        <h3 id="set-send-buffer">
+                            set-send-buffer
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets the send buffer size in bytes.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-timeout">
+                        <h3 id="set-timeout">
+                            set-timeout
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sets read and write timeouts in seconds.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#shutdown">
+                        <h3 id="shutdown">
+                            shutdown
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <pre class="args">
+                        (shutdown stream how)
+                    </pre>
+                    <p class="doc">
+                        <p>shuts down the stream. 0 = reads, 1 = writes, 2 = both.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#shutdown-">
+                        <h3 id="shutdown-">
+                            shutdown-
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#shutdown-read">
+                        <h3 id="shutdown-read">
+                            shutdown-read
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>shuts down the read side of the stream.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#shutdown-write">
+                        <h3 id="shutdown-write">
+                            shutdown-write
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>shuts down the write side of the stream.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#with-stream">
+                        <h3 id="with-stream">
+                            with-stream
+                        </h3>
+                    </a>
+                    <div class="description">
+                        macro
+                    </div>
+                    <p class="sig">
+                        Macro
+                    </p>
+                    <pre class="args">
+                        (with-stream name addr port :rest forms)
+                    </pre>
+                    <p class="doc">
+                        <p>connects, executes forms, then closes the stream.</p>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
