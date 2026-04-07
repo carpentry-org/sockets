@@ -1,4 +1,4 @@
-(load "sockets.carp")
+(load "socket.carp")
 
 (Project.config "title" "socket")
 (Project.config "docs-directory" "./docs/")

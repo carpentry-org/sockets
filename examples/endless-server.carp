@@ -1,4 +1,4 @@
-(load "sockets.carp")
+(load "socket.carp")
 (use Socket)
 
 (defn main []

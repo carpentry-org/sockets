@@ -1,5 +1,5 @@
 (load "Test.carp")
-(load "../sockets.carp")
+(load "../socket.carp")
 (use Test)
 
 (defn tcp-roundtrip []
