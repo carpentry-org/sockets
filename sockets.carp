@@ -1,4 +1,4 @@
-(load "../bufio/bufio.carp")
+(load "git@github.com:carpentry-org/bufio@0.1.0")
 (load "src/interfaces.carp")
 (load "src/tcp_stream.carp")
 (load "src/tcp_listener.carp")
