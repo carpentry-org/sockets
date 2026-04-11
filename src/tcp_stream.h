@@ -86,6 +86,51 @@ int TcpStream_read_MINUS_append_(TcpStream* s, Array* buf) {
   return (int)r;
 }
 
+/* Put the socket into non-blocking mode. After this call, send and read
+ * operations will return EAGAIN/EWOULDBLOCK instead of blocking. */
+void TcpStream_set_MINUS_nonblocking(TcpStream* s) {
+  int flags = fcntl(s->fd, F_GETFL, 0);
+  if (flags >= 0) fcntl(s->fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+/* Non-blocking send. Sends as many bytes as the kernel will accept right
+ * now, starting at `offset` into `data`.
+ *
+ * Returns:
+ *    >= 0  number of bytes actually sent (may be 0 if would-block)
+ *    -1    real error (errno is set)
+ */
+int TcpStream_send_MINUS_nb_(TcpStream* s, Array* data, int offset) {
+  if (offset >= data->len) return 0;
+  ssize_t n = send(s->fd, (char*)data->data + offset,
+                   (size_t)(data->len - offset), 0);
+  if (n >= 0) return (int)n;
+  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) return 0;
+  return -1;
+}
+
+/* Non-blocking append-read. Reads whatever the kernel has buffered into
+ * `buf`, growing the array if needed.
+ *
+ * Returns:
+ *    > 0  number of bytes appended
+ *      0  peer closed cleanly (EOF)
+ *    -1   real error
+ *    -2   would block (EAGAIN/EWOULDBLOCK), retry on next readable event
+ */
+int TcpStream_read_MINUS_append_MINUS_nb_(TcpStream* s, Array* buf) {
+  if ((int)(buf->capacity - buf->len) < SOCK_BUF_SIZE) {
+    int new_cap = (buf->len + SOCK_BUF_SIZE) * 2;
+    buf->data = CARP_REALLOC(buf->data, new_cap);
+    buf->capacity = new_cap;
+  }
+  ssize_t r = read(s->fd, (char*)buf->data + buf->len, SOCK_BUF_SIZE);
+  if (r > 0) { buf->len += (int)r; return (int)r; }
+  if (r == 0) return 0;
+  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) return -2;
+  return -1;
+}
+
 void TcpStream_clear_MINUS_buf(Array* buf) {
   buf->len = 0;
 }

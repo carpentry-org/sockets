@@ -6,7 +6,7 @@ and I/O multiplexing.
 ## Installation
 
 ```clojure
-(load "git@github.com:carpentry-org/socket@0.1.0")
+(load "git@github.com:carpentry-org/socket@0.1.2")
 ```
 
 ## Usage
@@ -83,6 +83,43 @@ Wrap any `TcpStream` in a `BufReader` for line-oriented reading:
       (UnixListener.close listener))
   _ ())
 ```
+
+### Non-blocking I/O
+
+`TcpStream` ships with a small set of non-blocking primitives for use with
+the event-loop pattern. Put a stream into non-blocking mode with
+`set-nonblocking`, then use `send-nb` and `read-append-nb` instead of the
+blocking variants:
+
+```clojure
+(TcpStream.set-nonblocking &client)
+
+; send-nb returns the number of bytes actually written. A successful 0
+; means the kernel buffer is full and you should wait for the next
+; writable event before retrying.
+(let [pos 0]
+  (match (TcpStream.send-nb &client &payload pos)
+    (Result.Success n) (set! pos (+ pos n))
+    (Result.Error e) (IO.errorln &e)))
+
+; read-append-nb appends whatever is buffered into `buf`. Returns one of:
+;   > 0                       bytes appended
+;   0                         peer closed cleanly
+;   TcpStream.read-blocked    socket has no data right now
+(match (TcpStream.read-append-nb &client &buf)
+  (Result.Success n)
+    (cond
+      (= n TcpStream.read-blocked) ; wait for next readable event
+      (= n 0)                      ; peer closed
+      true                         ; got n bytes, parse them
+      )
+  (Result.Error e) (IO.errorln &e))
+```
+
+These pair naturally with `Poll`. Register write interest after a partial
+send, switch back to read interest once the buffer drains, and so on. The
+[web](https://github.com/carpentry-org/web) framework's event loop is a
+worked example.
 
 ### I/O Multiplexing
 

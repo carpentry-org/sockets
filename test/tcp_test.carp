@@ -46,6 +46,43 @@
                   (do (TcpStream.close conn) (TcpStream.close client)
                       (TcpListener.close listener) ok)))))))
 
+(defn nb-roundtrip []
+  (match (TcpListener.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success listener)
+      (let [port (TcpListener.local-port &listener)]
+        (match (TcpStream.connect "127.0.0.1" port)
+          (Result.Error _) (do (TcpListener.close listener) false)
+          (Result.Success client)
+            (match (TcpListener.accept &listener)
+              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Success conn)
+                (let-do [buf (the (Array Byte) (Array.allocate 1024))
+                         payload (the (Array Byte) [(Char.to-byte \h) (Char.to-byte \i)])
+                         ok true]
+                  (TcpStream.set-nonblocking &client)
+                  ; nothing to read yet -> read-blocked sentinel
+                  (match (TcpStream.read-append-nb &client &buf)
+                    (Result.Success n)
+                      (when (/= n TcpStream.read-blocked) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; peer writes, we should be able to read it
+                  (ignore (TcpStream.send &conn "ping"))
+                  (System.sleep-micros 50000)
+                  (match (TcpStream.read-append-nb &client &buf)
+                    (Result.Success n)
+                      (when (/= n 4) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; non-blocking send returns bytes written
+                  (match (TcpStream.send-nb &client &payload 0)
+                    (Result.Success n)
+                      (when (/= n 2) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  (TcpStream.close client)
+                  (TcpStream.close conn)
+                  (TcpListener.close listener)
+                  ok))))))
+
 (defn bufstream-test []
   (match (TcpListener.bind "127.0.0.1" 0)
     (Result.Error _) false
@@ -93,4 +130,8 @@
   (assert-true test
     (bufstream-test)
     "BufReader.read-line reads a line correctly")
+
+  (assert-true test
+    (nb-roundtrip)
+    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes")
 )

@@ -135,6 +135,50 @@ in a collection. Sets the fd to -1 to prevent double-close.")
   (doc set-recv-buffer "sets the receive buffer size in bytes.")
   (register set-recv-buffer (Fn [&TcpStream Int] ()))
 
+  (doc set-nonblocking "puts the socket into non-blocking mode. After this
+call, `send-nb` and `read-append-nb` are the appropriate I/O entry points;
+the blocking variants will return `EAGAIN` instead of waiting.")
+  (register set-nonblocking (Fn [&TcpStream] ()))
+
+  (private send-nb-)
+  (hidden send-nb-)
+  (register send-nb- (Fn [&TcpStream &(Array Byte) Int] Int) "TcpStream_send_MINUS_nb_")
+
+  (doc send-nb "non-blocking send. Sends as many bytes as the kernel will
+accept right now from `data`, starting at `offset`.
+
+Returns `(Result Int String)`. The `Int` is the number of bytes actually
+written, which may be `0` if the socket is not currently writable. Re-arm
+write interest on the next event-loop iteration in that case.")
+  (defn send-nb [stream data offset]
+    (let [n (send-nb- stream data offset)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
+  (private read-append-nb-)
+  (hidden read-append-nb-)
+  (register read-append-nb- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_read_MINUS_append_MINUS_nb_")
+
+  (doc read-blocked "sentinel returned by `read-append-nb` when no data is
+currently available on a non-blocking socket.")
+  (def read-blocked -2)
+
+  (doc read-append-nb "non-blocking append-read. Reads whatever the kernel
+has buffered into `buf`, growing it as needed.
+
+Returns `(Result Int String)`. The `Int` is one of:
+
+- `> 0` bytes appended to `buf`,
+- `0` peer closed cleanly (EOF),
+- `read-blocked` (-2) socket has no data right now, retry on the next
+  readable event.")
+  (defn read-append-nb [stream buf]
+    (let [n (read-append-nb- stream buf)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
   (doc connect-timeout "connects with a timeout in seconds. Returns `(Result TcpStream String)`.")
   (private connect-timeout-)
   (hidden connect-timeout-)
@@ -158,7 +202,7 @@ in a collection. Sets the fd to -1 to prevent double-close.")
   (implements poll-fd TcpStream.poll-fd)
 
   (doc buffered "wraps this TcpStream in a BufReader for buffered I/O.
-Takes ownership of the stream — the BufReader will close it when deleted.
+Takes ownership of the stream. The BufReader will close it when deleted.
 
 ```
 (match (TcpStream.connect \"example.com\" 80)

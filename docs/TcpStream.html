@@ -79,7 +79,7 @@
                     </span>
                     <p class="doc">
                         <p>wraps this TcpStream in a BufReader for buffered I/O.
-Takes ownership of the stream — the BufReader will close it when deleted.</p>
+Takes ownership of the stream. The BufReader will close it when deleted.</p>
 <pre><code>(match (TcpStream.connect &quot;example.com&quot; 80)
   (Result.Success s)
     (let [br (TcpStream.buffered s)]
@@ -317,6 +317,55 @@ Returns bytes read (0 = connection closed), or an error.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#read-append-nb">
+                        <h3 id="read-append-nb">
+                            read-append-nb
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref (Array Byte) b)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (read-append-nb stream buf)
+                    </pre>
+                    <p class="doc">
+                        <p>non-blocking append-read. Reads whatever the kernel
+has buffered into <code>buf</code>, growing it as needed.</p>
+<p>Returns <code>(Result Int String)</code>. The <code>Int</code> is one of:</p>
+<ul>
+<li><code>&gt; 0</code> bytes appended to <code>buf</code>,</li>
+<li><code>0</code> peer closed cleanly (EOF),</li>
+<li><code>read-blocked</code> (-2) socket has no data right now, retry on the next
+readable event.</li>
+</ul>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read-blocked">
+                        <h3 id="read-blocked">
+                            read-blocked
+                        </h3>
+                    </a>
+                    <div class="description">
+                        def
+                    </div>
+                    <p class="sig">
+                        Int
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sentinel returned by <code>read-append-nb</code> when no data is
+currently available on a non-blocking socket.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#read-bytes">
                         <h3 id="read-bytes">
                             read-bytes
@@ -397,6 +446,30 @@ Returns bytes read (0 = connection closed), or an error.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#send-nb">
+                        <h3 id="send-nb">
+                            send-nb
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), (Ref (Array Byte) b), Int] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-nb stream data offset)
+                    </pre>
+                    <p class="doc">
+                        <p>non-blocking send. Sends as many bytes as the kernel will
+accept right now from <code>data</code>, starting at <code>offset</code>.</p>
+<p>Returns <code>(Result Int String)</code>. The <code>Int</code> is the number of bytes actually
+written, which may be <code>0</code> if the socket is not currently writable. Re-arm
+write interest on the next event-loop iteration in that case.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#set-keepalive">
                         <h3 id="set-keepalive">
                             set-keepalive
@@ -453,6 +526,28 @@ Returns bytes read (0 = connection closed), or an error.</p>
                     </span>
                     <p class="doc">
                         <p>disables Nagle's algorithm for lower latency.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-nonblocking">
+                        <h3 id="set-nonblocking">
+                            set-nonblocking
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>puts the socket into non-blocking mode. After this
+call, <code>send-nb</code> and <code>read-append-nb</code> are the appropriate I/O entry points;
+the blocking variants will return <code>EAGAIN</code> instead of waiting.</p>
 
                     </p>
                 </div>
