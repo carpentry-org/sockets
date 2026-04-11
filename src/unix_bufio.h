@@ -2,7 +2,7 @@
 #define CARP_UNIX_BUFIO_H
 
 #include "unix_stream.h"
-#include "../../bufio/src/bufio.h"
+/* BufReader types come from bufio.h, which Carp emits before this header */
 
 /* Adapters that bridge UnixStream to BufReader's function pointer interface */
 

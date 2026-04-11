@@ -2,7 +2,7 @@
 #define CARP_TCP_BUFIO_H
 
 #include "tcp_stream.h"
-#include "../../bufio/src/bufio.h"
+/* BufReader types come from bufio.h, which Carp emits before this header */
 
 /* Adapters that bridge TcpStream to BufReader's function pointer interface */
 
