@@ -214,6 +214,9 @@ would-block on a non-blocking socket).")
   (register copy (Fn [&TcpStream] TcpStream))
   (implements copy TcpStream.copy)
 
+  (defn prn [s] (fmt "TcpStream(%d)" (fd- s)))
+  (implements prn TcpStream.prn)
+
   (defn poll-fd [s] (fd- s))
   (implements poll-fd TcpStream.poll-fd)
 
