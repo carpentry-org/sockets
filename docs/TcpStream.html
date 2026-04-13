@@ -470,6 +470,30 @@ write interest on the next event-loop iteration in that case.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#sendfile-chunk">
+                        <h3 id="sendfile-chunk">
+                            sendfile-chunk
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref TcpStream a), Int, (Ref Long b), Long] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (sendfile-chunk stream file-fd offset count)
+                    </pre>
+                    <p class="doc">
+                        <p>transfers up to <code>count</code> bytes from open file
+descriptor <code>file-fd</code> starting at <code>offset</code> directly to the socket, without
+user-space buffering. Updates <code>offset</code> with the new position.</p>
+<p>Returns <code>(Result Int String)</code> where <code>Int</code> is bytes transferred (0 means
+would-block on a non-blocking socket).</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#set-keepalive">
                         <h3 id="set-keepalive">
                             set-keepalive

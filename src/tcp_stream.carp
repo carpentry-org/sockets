@@ -179,6 +179,22 @@ Returns `(Result Int String)`. The `Int` is one of:
         (Result.Error (System.error-text))
         (Result.Success n))))
 
+  (private sendfile-chunk-)
+  (hidden sendfile-chunk-)
+  (register sendfile-chunk- (Fn [&TcpStream Int &Long Long] Int) "TcpStream_sendfile_MINUS_chunk_")
+
+  (doc sendfile-chunk "transfers up to `count` bytes from open file
+descriptor `file-fd` starting at `offset` directly to the socket, without
+user-space buffering. Updates `offset` with the new position.
+
+Returns `(Result Int String)` where `Int` is bytes transferred (0 means
+would-block on a non-blocking socket).")
+  (defn sendfile-chunk [stream file-fd offset count]
+    (let [n (sendfile-chunk- stream file-fd offset count)]
+      (if (= n -1)
+        (Result.Error (System.error-text))
+        (Result.Success n))))
+
   (doc connect-timeout "connects with a timeout in seconds. Returns `(Result TcpStream String)`.")
   (private connect-timeout-)
   (hidden connect-timeout-)

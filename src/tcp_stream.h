@@ -135,6 +135,52 @@ void TcpStream_clear_MINUS_buf(Array* buf) {
   buf->len = 0;
 }
 
+/* sendfile: transfer `count` bytes from open file `file_fd` starting at
+ * `*offset` directly to the socket, without user-space buffering.
+ * Updates `*offset` on success.
+ *
+ * Returns:
+ *   > 0   bytes transferred
+ *     0   would block (EAGAIN), retry on next writable event
+ *   -1    error
+ */
+#include <sys/stat.h>
+
+#ifdef __APPLE__
+#include <sys/uio.h>
+int TcpStream_sendfile_MINUS_chunk_(TcpStream* s, int file_fd, Long* offset, Long count) {
+  off_t len = (off_t)count;
+  int ret = sendfile(file_fd, s->fd, (off_t)*offset, &len, NULL, 0);
+  if (ret == 0 || (ret == -1 && errno == EAGAIN)) {
+    *offset += (Long)len;
+    return (int)len;
+  }
+  return -1;
+}
+#elif defined(__linux__)
+#include <sys/sendfile.h>
+int TcpStream_sendfile_MINUS_chunk_(TcpStream* s, int file_fd, Long* offset, Long count) {
+  off_t off = (off_t)*offset;
+  ssize_t n = sendfile(s->fd, file_fd, &off, (size_t)count);
+  if (n >= 0) { *offset = (Long)off; return (int)n; }
+  if (errno == EAGAIN || errno == EWOULDBLOCK) return 0;
+  return -1;
+}
+#else
+int TcpStream_sendfile_MINUS_chunk_(TcpStream* s, int file_fd, Long* offset, Long count) {
+  char buf[8192];
+  size_t to_read = count < (Long)sizeof(buf) ? (size_t)count : sizeof(buf);
+  if (lseek(file_fd, (off_t)*offset, SEEK_SET) == -1) return -1;
+  ssize_t r = read(file_fd, buf, to_read);
+  if (r <= 0) return r == 0 ? 0 : -1;
+  ssize_t n = send(s->fd, buf, (size_t)r, 0);
+  if (n >= 0) { *offset += (Long)n; return (int)n; }
+  if (errno == EAGAIN || errno == EWOULDBLOCK) return 0;
+  return -1;
+}
+#endif
+
+
 void TcpStream_close_MINUS_ref(TcpStream* s) {
   if (s->fd >= 0) { close(s->fd); s->fd = -1; }
 }
