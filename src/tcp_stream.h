@@ -135,6 +135,13 @@ void TcpStream_clear_MINUS_buf(Array* buf) {
   buf->len = 0;
 }
 
+String TcpStream_prn_(TcpStream s) {
+  size_t len = (size_t)snprintf(NULL, 0, "TcpStream(%d)", s.fd);
+  String r = CARP_MALLOC(len + 1);
+  snprintf(r, len + 1, "TcpStream(%d)", s.fd);
+  return r;
+}
+
 /* sendfile: transfer `count` bytes from open file `file_fd` starting at
  * `*offset` directly to the socket, without user-space buffering.
  * Updates `*offset` on success.

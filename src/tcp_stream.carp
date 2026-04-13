@@ -100,9 +100,6 @@ Returns bytes read (0 = connection closed), or an error.")
   (register close (Fn [TcpStream] ()))
   (doc close "closes the stream, consuming it.")
 
-  (defn delete [s] (close s))
-  (implements delete TcpStream.delete)
-
   (doc close! "closes the stream by reference, for use when the stream lives
 in a collection. Sets the fd to -1 to prevent double-close.")
   (register close! (Fn [&TcpStream] ()) "TcpStream_close_MINUS_ref")
@@ -217,7 +214,7 @@ would-block on a non-blocking socket).")
   (register copy (Fn [&TcpStream] TcpStream))
   (implements copy TcpStream.copy)
 
-  (defn prn [s] (fmt "TcpStream(%d)" (fd- s)))
+  (register prn (Fn [TcpStream] String) "TcpStream_prn_")
   (implements prn TcpStream.prn)
 
   (defn poll-fd [s] (fd- s))
