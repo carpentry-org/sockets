@@ -100,6 +100,9 @@ Returns bytes read (0 = connection closed), or an error.")
   (register close (Fn [TcpStream] ()))
   (doc close "closes the stream, consuming it.")
 
+  (defn delete [s] (close s))
+  (implements delete TcpStream.delete)
+
   (doc close! "closes the stream by reference, for use when the stream lives
 in a collection. Sets the fd to -1 to prevent double-close.")
   (register close! (Fn [&TcpStream] ()) "TcpStream_close_MINUS_ref")
