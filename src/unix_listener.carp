@@ -2,7 +2,8 @@
 
 (register-type UnixListener)
 
-(doc UnixListener "is a Unix domain socket server that listens for and accepts connections.
+(doc UnixListener
+  "is a Unix domain socket server that listens for and accepts connections.
 
 ## Usage
 ```
@@ -39,9 +40,7 @@ Unlinks any existing socket at that path first, then starts listening.
 Returns `(Result UnixListener String)`.")
   (defn bind [path]
     (let [l (bind- path)]
-      (if (= (fd- &l) -1)
-        (Result.Error (System.error-text))
-        (Result.Success l))))
+      (if (= (fd- &l) -1) (Result.Error (System.error-text)) (Result.Success l))))
 
   (doc accept "accepts a new Unix domain connection, returning a `UnixStream`.
 Blocks until a client connects. Returns `(Result UnixStream String)`.")
@@ -52,7 +51,8 @@ Blocks until a client connects. Returns `(Result UnixStream String)`.")
         (Result.Success s))))
 
   (register close (Fn [UnixListener] ()))
-  (doc close "closes the listener, releasing the file descriptor and unlinking the socket path.")
+  (doc close
+    "closes the listener, releasing the file descriptor and unlinking the socket path.")
 
   (doc path "returns the path the listener is bound to.")
   (register path (Fn [&UnixListener] String))
@@ -66,9 +66,11 @@ Blocks until a client connects. Returns `(Result UnixStream String)`.")
   (doc while-accept "accepts connections in a loop. Binds each accepted stream
 to `name` and executes `forms`, then closes the stream. Loops forever.")
   (defmacro while-accept [listener name :rest forms]
-    (list 'while true
-      (list 'match (list 'UnixListener.accept listener)
-        '(Result.Error _) '(break)
-        (list 'Result.Success name)
-          (cons-last (list 'UnixStream.close name) (cons 'do forms)))))
-)
+    (list 'while
+          true
+          (list 'match
+                (list 'UnixListener.accept listener)
+                '(Result.Error _)
+                '(break)
+                (list 'Result.Success name)
+                (cons-last (list 'UnixStream.close name) (cons 'do forms))))))

@@ -2,7 +2,8 @@
 
 (register-type TcpListener)
 
-(doc TcpListener "is a TCP server socket that listens for and accepts connections.
+(doc TcpListener
+  "is a TCP server socket that listens for and accepts connections.
 
 ## Usage
 ```
@@ -39,9 +40,7 @@ The socket is set to reuse address/port and starts listening immediately.
 Returns `(Result TcpListener String)`.")
   (defn bind [addr port]
     (let [l (bind- addr port)]
-      (if (= (fd- &l) -1)
-        (Result.Error (System.error-text))
-        (Result.Success l))))
+      (if (= (fd- &l) -1) (Result.Error (System.error-text)) (Result.Success l))))
 
   (doc accept "accepts a new TCP connection, returning a `TcpStream`.
 Blocks until a client connects. Returns `(Result TcpStream String)`.")
@@ -73,9 +72,11 @@ Useful when binding to port 0 (OS-assigned).")
   (doc while-accept "accepts connections in a loop. Binds each accepted stream
 to `name` and executes `forms`, then closes the stream. Loops forever.")
   (defmacro while-accept [listener name :rest forms]
-    (list 'while true
-      (list 'match (list 'TcpListener.accept listener)
-        '(Result.Error _) '(break)
-        (list 'Result.Success name)
-          (cons-last (list 'TcpStream.close name) (cons 'do forms)))))
-)
+    (list 'while
+          true
+          (list 'match
+                (list 'TcpListener.accept listener)
+                '(Result.Error _)
+                '(break)
+                (list 'Result.Success name)
+                (cons-last (list 'TcpStream.close name) (cons 'do forms))))))

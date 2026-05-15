@@ -32,67 +32,67 @@ and accepted server connections.
   (register send- (Fn [&TcpStream &String] Int) "TcpStream_send_")
   (private send-bytes-)
   (hidden send-bytes-)
-  (register send-bytes- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_send_MINUS_bytes_")
+  (register send-bytes-
+    (Fn [&TcpStream &(Array Byte)] Int)
+    "TcpStream_send_MINUS_bytes_")
   (private send-len-)
   (hidden send-len-)
-  (register send-len- (Fn [&TcpStream &String Int] Int) "TcpStream_send_MINUS_len_")
+  (register send-len-
+    (Fn [&TcpStream &String Int] Int)
+    "TcpStream_send_MINUS_len_")
   (private read-)
   (hidden read-)
   (register read- (Fn [&TcpStream] String) "TcpStream_read_")
   (private read-bytes-)
   (hidden read-bytes-)
-  (register read-bytes- (Fn [&TcpStream] (Array Byte)) "TcpStream_read_MINUS_bytes_")
+  (register read-bytes-
+    (Fn [&TcpStream] (Array Byte))
+    "TcpStream_read_MINUS_bytes_")
   (private read-append-)
   (hidden read-append-)
-  (register read-append- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_read_MINUS_append_")
+  (register read-append-
+    (Fn [&TcpStream &(Array Byte)] Int)
+    "TcpStream_read_MINUS_append_")
 
   ; -- public API --
 
-  (doc connect "connects to a remote TCP address. Returns `(Result TcpStream String)`.")
+  (doc connect
+    "connects to a remote TCP address. Returns `(Result TcpStream String)`.")
   (defn connect [addr port]
     (let [s (connect- addr port)]
-      (if (= (fd- &s) -1)
-        (Result.Error (System.error-text))
-        (Result.Success s))))
+      (if (= (fd- &s) -1) (Result.Error (System.error-text)) (Result.Success s))))
 
   (doc send "sends a string over the stream. Returns bytes sent or an error.")
   (defn send [stream msg]
     (let [n (send- stream msg)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
-  (doc send-bytes "sends binary data over the stream. Returns bytes sent or an error.")
+  (doc send-bytes
+    "sends binary data over the stream. Returns bytes sent or an error.")
   (defn send-bytes [stream data]
     (let [n (send-bytes- stream data)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
-  (doc send-len "sends a string with known length (avoids strlen). Returns bytes sent or an error.")
+  (doc send-len
+    "sends a string with known length (avoids strlen). Returns bytes sent or an error.")
   (defn send-len [stream msg len]
     (let [n (send-len- stream msg len)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
-  (doc read "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
+  (doc read
+    "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
 Returns an empty string on connection close.")
-  (defn read [stream]
-    (let [s (read- stream)]
-      (Result.Success s)))
+  (defn read [stream] (let [s (read- stream)] (Result.Success s)))
 
   (doc read-bytes "reads up to 4096 bytes as a byte array.")
-  (defn read-bytes [stream]
-    (Result.Success (read-bytes- stream)))
+  (defn read-bytes [stream] (Result.Success (read-bytes- stream)))
 
-  (doc read-append "reads from the stream and appends to an existing byte buffer.
+  (doc read-append
+    "reads from the stream and appends to an existing byte buffer.
 Returns bytes read (0 = connection closed), or an error.")
   (defn read-append [stream buf]
     (let [n (read-append- stream buf)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
   (doc clear-buf "resets a byte buffer's length to zero without freeing memory.")
   (register clear-buf (Fn [&(Array Byte)] ()))
@@ -126,7 +126,8 @@ in a collection. Sets the fd to -1 to prevent double-close.")
   (doc set-keepalive "enables or disables TCP keep-alive.")
   (register set-keepalive (Fn [&TcpStream Int] ()))
 
-  (doc set-linger "sets the linger timeout in seconds. Pass -1 to disable linger.")
+  (doc set-linger
+    "sets the linger timeout in seconds. Pass -1 to disable linger.")
   (register set-linger (Fn [&TcpStream Int] ()))
 
   (doc set-send-buffer "sets the send buffer size in bytes.")
@@ -142,7 +143,9 @@ the blocking variants will return `EAGAIN` instead of waiting.")
 
   (private send-nb-)
   (hidden send-nb-)
-  (register send-nb- (Fn [&TcpStream &(Array Byte) Int] Int) "TcpStream_send_MINUS_nb_")
+  (register send-nb-
+    (Fn [&TcpStream &(Array Byte) Int] Int)
+    "TcpStream_send_MINUS_nb_")
 
   (doc send-nb "non-blocking send. Sends as many bytes as the kernel will
 accept right now from `data`, starting at `offset`.
@@ -152,13 +155,13 @@ written, which may be `0` if the socket is not currently writable. Re-arm
 write interest on the next event-loop iteration in that case.")
   (defn send-nb [stream data offset]
     (let [n (send-nb- stream data offset)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
   (private read-append-nb-)
   (hidden read-append-nb-)
-  (register read-append-nb- (Fn [&TcpStream &(Array Byte)] Int) "TcpStream_read_MINUS_append_MINUS_nb_")
+  (register read-append-nb-
+    (Fn [&TcpStream &(Array Byte)] Int)
+    "TcpStream_read_MINUS_append_MINUS_nb_")
 
   (doc read-blocked "sentinel returned by `read-append-nb` when no data is
 currently available on a non-blocking socket.")
@@ -175,13 +178,13 @@ Returns `(Result Int String)`. The `Int` is one of:
   readable event.")
   (defn read-append-nb [stream buf]
     (let [n (read-append-nb- stream buf)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
   (private sendfile-chunk-)
   (hidden sendfile-chunk-)
-  (register sendfile-chunk- (Fn [&TcpStream Int &Long Long] Int) "TcpStream_sendfile_MINUS_chunk_")
+  (register sendfile-chunk-
+    (Fn [&TcpStream Int &Long Long] Int)
+    "TcpStream_sendfile_MINUS_chunk_")
 
   (doc sendfile-chunk "transfers up to `count` bytes from open file
 descriptor `file-fd` starting at `offset` directly to the socket, without
@@ -191,19 +194,18 @@ Returns `(Result Int String)` where `Int` is bytes transferred (0 means
 would-block on a non-blocking socket).")
   (defn sendfile-chunk [stream file-fd offset count]
     (let [n (sendfile-chunk- stream file-fd offset count)]
-      (if (= n -1)
-        (Result.Error (System.error-text))
-        (Result.Success n))))
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
-  (doc connect-timeout "connects with a timeout in seconds. Returns `(Result TcpStream String)`.")
+  (doc connect-timeout
+    "connects with a timeout in seconds. Returns `(Result TcpStream String)`.")
   (private connect-timeout-)
   (hidden connect-timeout-)
-  (register connect-timeout- (Fn [&String Int Int] TcpStream) "TcpStream_connect_MINUS_timeout_")
+  (register connect-timeout-
+    (Fn [&String Int Int] TcpStream)
+    "TcpStream_connect_MINUS_timeout_")
   (defn connect-timeout [addr port timeout]
     (let [s (connect-timeout- addr port timeout)]
-      (if (= (fd- &s) -1)
-        (Result.Error (System.error-text))
-        (Result.Success s))))
+      (if (= (fd- &s) -1) (Result.Error (System.error-text)) (Result.Success s))))
 
   (doc peer-address "returns the IP address of the remote peer.")
   (register peer-address (Fn [&TcpStream] String))
@@ -240,8 +242,9 @@ Takes ownership of the stream. The BufReader will close it when deleted.
 
   (doc with-stream "connects, executes forms, then closes the stream.")
   (defmacro with-stream [name addr port :rest forms]
-    (list 'match (list 'TcpStream.connect addr port)
-      (list 'Result.Error 'err) '(Result.Error err)
-      (list 'Result.Success name)
-        (cons-last (list 'TcpStream.close name) (cons 'do forms))))
-)
+    (list 'match
+          (list 'TcpStream.connect addr port)
+          (list 'Result.Error 'err)
+          '(Result.Error err)
+          (list 'Result.Success name)
+          (cons-last (list 'TcpStream.close name) (cons 'do forms)))))

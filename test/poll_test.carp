@@ -9,21 +9,29 @@
       (match (Poll.create)
         (Result.Error _) (do (TcpListener.close listener) false)
         (Result.Success poll)
-          (let [port (TcpListener.local-port &listener)]
-            (do
-              (ignore (Poll.add-read &poll &listener))
-              ; Connect a client — this makes the listener readable
-              (match (TcpStream.connect "127.0.0.1" port)
-                (Result.Error _) (do (Poll.close poll) (TcpListener.close listener) false)
-                (Result.Success client)
-                  (match (the (Result (Array PollEvent) String) (Poll.wait &poll 1000))
-                    (Result.Success events)
-                      (let [ok (and (> (Array.length &events) 0)
-                                    (PollEvent.readable (Array.unsafe-nth &events 0)))]
-                        (do (TcpStream.close client) (Poll.close poll)
-                            (TcpListener.close listener) ok))
-                    _ (do (TcpStream.close client) (Poll.close poll)
-                          (TcpListener.close listener) false))))))))
+          (let-do [port (TcpListener.local-port &listener)]
+            (ignore (Poll.add-read &poll &listener))
+            ; Connect a client — this makes the listener readable
+            (match (TcpStream.connect "127.0.0.1" port)
+              (Result.Error _)
+                (do (Poll.close poll) (TcpListener.close listener) false)
+              (Result.Success client)
+                (match (the (Result (Array PollEvent) String)
+                            (Poll.wait &poll 1000))
+                  (Result.Success events)
+                    (let-do [ok (and (> (Array.length &events) 0)
+                                     (PollEvent.readable (Array.unsafe-nth &events
+                                                                           0)))]
+                      (TcpStream.close client)
+                      (Poll.close poll)
+                      (TcpListener.close listener)
+                      ok)
+                  _
+                    (do
+                      (TcpStream.close client)
+                      (Poll.close poll)
+                      (TcpListener.close listener)
+                      false)))))))
 
 (defn poll-read-test []
   (match (TcpListener.bind "127.0.0.1" 0)
@@ -34,24 +42,39 @@
           (Result.Error _) (do (TcpListener.close listener) false)
           (Result.Success client)
             (match (TcpListener.accept &listener)
-              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Error _)
+                (do (TcpStream.close client) (TcpListener.close listener) false)
               (Result.Success conn)
                 (match (Poll.create)
-                  (Result.Error _) (do (TcpStream.close conn) (TcpStream.close client)
-                                       (TcpListener.close listener) false)
+                  (Result.Error _)
+                    (do
+                      (TcpStream.close conn)
+                      (TcpStream.close client)
+                      (TcpListener.close listener)
+                      false)
                   (Result.Success poll)
                     (do
                       (ignore (Poll.add-read &poll &conn))
                       ; Send data so conn becomes readable
                       (ignore (TcpStream.send &client "hello"))
-                      (match (the (Result (Array PollEvent) String) (Poll.wait &poll 1000))
+                      (match (the (Result (Array PollEvent) String)
+                                  (Poll.wait &poll 1000))
                         (Result.Success events)
-                          (let [ok (and (> (Array.length &events) 0)
-                                        (PollEvent.readable (Array.unsafe-nth &events 0)))]
-                            (do (Poll.close poll) (TcpStream.close conn)
-                                (TcpStream.close client) (TcpListener.close listener) ok))
-                        _ (do (Poll.close poll) (TcpStream.close conn)
-                              (TcpStream.close client) (TcpListener.close listener) false)))))))))
+                          (let-do [ok (and (> (Array.length &events) 0)
+                                           (PollEvent.readable (Array.unsafe-nth &events
+                                                                                 0)))]
+                            (Poll.close poll)
+                            (TcpStream.close conn)
+                            (TcpStream.close client)
+                            (TcpListener.close listener)
+                            ok)
+                        _
+                          (do
+                            (Poll.close poll)
+                            (TcpStream.close conn)
+                            (TcpStream.close client)
+                            (TcpListener.close listener)
+                            false)))))))))
 
 (defn poll-timeout-test []
   (match (TcpListener.bind "127.0.0.1" 0)
@@ -65,15 +88,15 @@
             ; No client connects — wait should time out with 0 events
             (match (the (Result (Array PollEvent) String) (Poll.wait &poll 50))
               (Result.Success events)
-                (let [ok (= (Array.length &events) 0)]
-                  (do (Poll.close poll) (TcpListener.close listener) ok))
+                (let-do [ok (= (Array.length &events) 0)]
+                  (Poll.close poll)
+                  (TcpListener.close listener)
+                  ok)
               _ (do (Poll.close poll) (TcpListener.close listener) false))))))
 
 (deftest test
   (assert-true test
-    (match (Poll.create)
-      (Result.Success p) (do (Poll.close p) true)
-      _ false)
+    (match (Poll.create) (Result.Success p) (do (Poll.close p) true) _ false)
     "Poll.create succeeds")
 
   (assert-true test
@@ -84,7 +107,4 @@
     (poll-read-test)
     "Poll detects stream readability when data arrives")
 
-  (assert-true test
-    (poll-timeout-test)
-    "Poll.wait returns empty on timeout")
-)
+  (assert-true test (poll-timeout-test) "Poll.wait returns empty on timeout"))

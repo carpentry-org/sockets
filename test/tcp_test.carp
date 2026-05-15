@@ -3,32 +3,45 @@
 (use Test)
 
 (defn tcp-roundtrip []
-  (match (TcpListener.bind "127.0.0.1" 0) ; port 0 = OS assigns
-    (Result.Error _) false
+  (match (TcpListener.bind "127.0.0.1" 0)
+    ; port 0 = OS assigns
+    (Result.Error _)
+    false
     (Result.Success listener)
-      (let [port (TcpListener.local-port &listener)]
-        (match (TcpStream.connect "127.0.0.1" port)
-          (Result.Error _) (do (TcpListener.close listener) false)
-          (Result.Success client)
-            (match (TcpListener.accept &listener)
-              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
-              (Result.Success conn)
-                (do
-                  (ignore (TcpStream.send &client "ping"))
-                  (match (the (Result String String) (TcpStream.read &conn))
-                    (Result.Success msg)
-                      (let [ok (= &msg "ping")]
-                        (do
-                          (ignore (TcpStream.send &conn "pong"))
-                          (match (the (Result String String) (TcpStream.read &client))
-                            (Result.Success reply)
-                              (let [ok2 (and ok (= &reply "pong"))]
-                                (do (TcpStream.close conn) (TcpStream.close client)
-                                    (TcpListener.close listener) ok2))
-                            _ (do (TcpStream.close conn) (TcpStream.close client)
-                                  (TcpListener.close listener) false))))
-                    _ (do (TcpStream.close conn) (TcpStream.close client)
-                          (TcpListener.close listener) false))))))))
+    (let [port (TcpListener.local-port &listener)]
+      (match (TcpStream.connect "127.0.0.1" port)
+        (Result.Error _) (do (TcpListener.close listener) false)
+        (Result.Success client)
+          (match (TcpListener.accept &listener)
+            (Result.Error _)
+              (do (TcpStream.close client) (TcpListener.close listener) false)
+            (Result.Success conn)
+              (do
+                (ignore (TcpStream.send &client "ping"))
+                (match (the (Result String String) (TcpStream.read &conn))
+                  (Result.Success msg)
+                    (let-do [ok (= &msg "ping")]
+                      (ignore (TcpStream.send &conn "pong"))
+                      (match (the (Result String String)
+                                  (TcpStream.read &client))
+                        (Result.Success reply)
+                          (let-do [ok2 (and ok (= &reply "pong"))]
+                            (TcpStream.close conn)
+                            (TcpStream.close client)
+                            (TcpListener.close listener)
+                            ok2)
+                        _
+                          (do
+                            (TcpStream.close conn)
+                            (TcpStream.close client)
+                            (TcpListener.close listener)
+                            false)))
+                  _
+                    (do
+                      (TcpStream.close conn)
+                      (TcpStream.close client)
+                      (TcpListener.close listener)
+                      false))))))))
 
 (defn tcp-peer-info []
   (match (TcpListener.bind "127.0.0.1" 0)
@@ -39,12 +52,15 @@
           (Result.Error _) (do (TcpListener.close listener) false)
           (Result.Success client)
             (match (TcpListener.accept &listener)
-              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Error _)
+                (do (TcpStream.close client) (TcpListener.close listener) false)
               (Result.Success conn)
-                (let [addr (TcpStream.peer-address &conn)
-                      ok (= &addr "127.0.0.1")]
-                  (do (TcpStream.close conn) (TcpStream.close client)
-                      (TcpListener.close listener) ok)))))))
+                (let-do [addr (TcpStream.peer-address &conn)
+                         ok (= &addr "127.0.0.1")]
+                  (TcpStream.close conn)
+                  (TcpStream.close client)
+                  (TcpListener.close listener)
+                  ok))))))
 
 (defn nb-roundtrip []
   (match (TcpListener.bind "127.0.0.1" 0)
@@ -55,10 +71,12 @@
           (Result.Error _) (do (TcpListener.close listener) false)
           (Result.Success client)
             (match (TcpListener.accept &listener)
-              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Error _)
+                (do (TcpStream.close client) (TcpListener.close listener) false)
               (Result.Success conn)
                 (let-do [buf (the (Array Byte) (Array.allocate 1024))
-                         payload (the (Array Byte) [(Char.to-byte \h) (Char.to-byte \i)])
+                         payload (the (Array Byte)
+                                      [(Char.to-byte \h) (Char.to-byte \i)])
                          ok true]
                   (TcpStream.set-nonblocking &client)
                   ; nothing to read yet -> read-blocked sentinel
@@ -70,13 +88,11 @@
                   (ignore (TcpStream.send &conn "ping"))
                   (System.sleep-micros 50000)
                   (match (TcpStream.read-append-nb &client &buf)
-                    (Result.Success n)
-                      (when (/= n 4) (set! ok false))
+                    (Result.Success n) (when (/= n 4) (set! ok false))
                     (Result.Error _) (set! ok false))
                   ; non-blocking send returns bytes written
                   (match (TcpStream.send-nb &client &payload 0)
-                    (Result.Success n)
-                      (when (/= n 2) (set! ok false))
+                    (Result.Success n) (when (/= n 2) (set! ok false))
                     (Result.Error _) (set! ok false))
                   (TcpStream.close client)
                   (TcpStream.close conn)
@@ -92,19 +108,21 @@
           (Result.Error _) (do (TcpListener.close listener) false)
           (Result.Success client)
             (match (TcpListener.accept &listener)
-              (Result.Error _) (do (TcpStream.close client) (TcpListener.close listener) false)
+              (Result.Error _)
+                (do (TcpStream.close client) (TcpListener.close listener) false)
               (Result.Success conn)
-                (let [bs (TcpStream.buffered conn)]
-                  (do
-                    (ignore (TcpStream.send &client "line one\nline two\n"))
-                    (let [result (match (BufReader.read-line &bs)
-                                   (Result.Success line) (= &line "line one\n")
-                                   _ false)]
-                      (do
-                        (TcpStream.close client)
-                        (BufReader.delete bs)
-                        (TcpListener.close listener)
-                        result)))))))))
+                (let-do [bs (TcpStream.buffered conn)]
+                  (ignore (TcpStream.send &client "line one
+line two
+"))
+                  (let-do [result (match (BufReader.read-line &bs)
+                             (Result.Success line) (= &line "line one
+")
+                             _ false)]
+                    (TcpStream.close client)
+                    (BufReader.delete bs)
+                    (TcpListener.close listener)
+                    result)))))))
 
 (deftest test
   (assert-true test
@@ -114,14 +132,10 @@
     "TcpListener.bind succeeds on port 0")
 
   (assert-true test
-    (match (TcpStream.connect "127.0.0.1" 1)
-      (Result.Error _) true
-      _ false)
+    (match (TcpStream.connect "127.0.0.1" 1) (Result.Error _) true _ false)
     "TcpStream.connect fails when nothing listening")
 
-  (assert-true test
-    (tcp-roundtrip)
-    "TCP roundtrip: send ping, receive pong")
+  (assert-true test (tcp-roundtrip) "TCP roundtrip: send ping, receive pong")
 
   (assert-true test
     (tcp-peer-info)
@@ -133,5 +147,4 @@
 
   (assert-true test
     (nb-roundtrip)
-    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes")
-)
+    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes"))

@@ -20,8 +20,7 @@ Check `readable`, `writable`, and `error?` to see what happened on `fd`.")
   (doc error? "returns true if an error occurred on the fd.")
   (register error? (Fn [&PollEvent] Bool))
   (register copy (Fn [&PollEvent] PollEvent))
-  (implements copy PollEvent.copy)
-)
+  (implements copy PollEvent.copy))
 
 ; ---------------------------------------------------------------------------
 ; Interest constants
@@ -84,9 +83,7 @@ for readiness. Uses kqueue on macOS/BSD and epoll on Linux.
   (doc create "creates a new Poll instance. Returns `(Result Poll String)`.")
   (defn create []
     (let [p (create-)]
-      (if (= (fd- &p) -1)
-        (Result.Error (System.error-text))
-        (Result.Success p))))
+      (if (= (fd- &p) -1) (Result.Error (System.error-text)) (Result.Success p))))
 
   (doc add "registers a file descriptor for the given interest flags.
 Use `poll-read`, `poll-write`, or `poll-read-write`.")
@@ -96,16 +93,13 @@ Use `poll-read`, `poll-write`, or `poll-read-write`.")
       (Result.Success ())))
 
   (doc add-read "registers a file descriptor for read readiness.")
-  (defn add-read [poll fd]
-    (add poll (poll-fd fd) poll-read))
+  (defn add-read [poll fd] (add poll (poll-fd fd) poll-read))
 
   (doc add-write "registers a file descriptor for write readiness.")
-  (defn add-write [poll fd]
-    (add poll (poll-fd fd) poll-write))
+  (defn add-write [poll fd] (add poll (poll-fd fd) poll-write))
 
   (doc add-read-write "registers a file descriptor for both read and write.")
-  (defn add-read-write [poll fd]
-    (add poll (poll-fd fd) poll-read-write))
+  (defn add-read-write [poll fd] (add poll (poll-fd fd) poll-read-write))
 
   (doc modify "changes the interest flags for an already-registered fd.")
   (defn modify [poll fd interest]
@@ -127,12 +121,10 @@ Use `poll-read`, `poll-write`, or `poll-read-write`.")
 
   (doc wait "waits for events, blocking up to `timeout-ms` milliseconds.
 Pass -1 to block indefinitely. Returns `(Result (Array PollEvent) String)`.")
-  (defn wait [poll timeout-ms]
-    (Result.Success (wait- poll timeout-ms)))
+  (defn wait [poll timeout-ms] (Result.Success (wait- poll timeout-ms)))
 
   (register close (Fn [Poll] ()))
   (doc close "closes the poll instance.")
 
   (register copy (Fn [&Poll] Poll))
-  (implements copy Poll.copy)
-)
+  (implements copy Poll.copy))

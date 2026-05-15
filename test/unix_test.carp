@@ -11,17 +11,27 @@
           (Result.Error _) (do (UnixListener.close listener) false)
           (Result.Success client)
             (match (UnixListener.accept &listener)
-              (Result.Error _) (do (UnixStream.close client) (UnixListener.close listener) false)
+              (Result.Error _)
+                (do
+                  (UnixStream.close client)
+                  (UnixListener.close listener)
+                  false)
               (Result.Success conn)
                 (do
                   (ignore (UnixStream.send &client "hello unix"))
                   (match (the (Result String String) (UnixStream.read &conn))
                     (Result.Success msg)
-                      (let [ok (= &msg "hello unix")]
-                        (do (UnixStream.close conn) (UnixStream.close client)
-                            (UnixListener.close listener) ok))
-                    _ (do (UnixStream.close conn) (UnixStream.close client)
-                          (UnixListener.close listener) false))))))))
+                      (let-do [ok (= &msg "hello unix")]
+                        (UnixStream.close conn)
+                        (UnixStream.close client)
+                        (UnixListener.close listener)
+                        ok)
+                    _
+                      (do
+                        (UnixStream.close conn)
+                        (UnixStream.close client)
+                        (UnixListener.close listener)
+                        false))))))))
 
 (deftest test
   (assert-true test
@@ -36,7 +46,4 @@
       _ false)
     "UnixStream.connect fails on nonexistent path")
 
-  (assert-true test
-    (unix-roundtrip)
-    "Unix socket roundtrip: send and receive")
-)
+  (assert-true test (unix-roundtrip) "Unix socket roundtrip: send and receive"))

@@ -33,5 +33,11 @@ All fallible operations return `(Result T String)`.
   _ ())
 ```")
 
-(save-docs TcpListener TcpStream UdpSocket UnixListener UnixStream Poll PollEvent)
+(save-docs TcpListener
+           TcpStream
+           UdpSocket
+           UnixListener
+           UnixStream
+           Poll
+           PollEvent)
 (quit)
