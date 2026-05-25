@@ -100,6 +100,48 @@ String UnixStream_peer_MINUS_path(UnixStream* s) {
   return str;
 }
 
+void UnixStream_close_MINUS_ref(UnixStream* s) {
+  if (s->fd >= 0) { close(s->fd); s->fd = -1; }
+}
+
+void UnixStream_set_MINUS_nonblocking(UnixStream* s) {
+  int flags = fcntl(s->fd, F_GETFL, 0);
+  if (flags >= 0) fcntl(s->fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+int UnixStream_send_MINUS_len_(UnixStream* s, String* msg, int len) {
+  return (int)send_all(s->fd, *msg, (size_t)len);
+}
+
+int UnixStream_send_MINUS_nb_(UnixStream* s, Array* data, int offset) {
+  if (offset >= data->len) return 0;
+  ssize_t n = send(s->fd, (char*)data->data + offset,
+                   (size_t)(data->len - offset), 0);
+  if (n >= 0) return (int)n;
+  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) return 0;
+  return -1;
+}
+
+int UnixStream_read_MINUS_append_MINUS_nb_(UnixStream* s, Array* buf) {
+  if ((int)(buf->capacity - buf->len) < SOCK_BUF_SIZE) {
+    int new_cap = (buf->len + SOCK_BUF_SIZE) * 2;
+    buf->data = CARP_REALLOC(buf->data, new_cap);
+    buf->capacity = new_cap;
+  }
+  ssize_t r = read(s->fd, (char*)buf->data + buf->len, SOCK_BUF_SIZE);
+  if (r > 0) { buf->len += (int)r; return (int)r; }
+  if (r == 0) return 0;
+  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) return -2;
+  return -1;
+}
+
+String UnixStream_prn_(UnixStream s) {
+  size_t len = (size_t)snprintf(NULL, 0, "UnixStream(%d)", s.fd);
+  String r = CARP_MALLOC(len + 1);
+  snprintf(r, len + 1, "UnixStream(%d)", s.fd);
+  return r;
+}
+
 UnixStream UnixStream_copy(UnixStream* s) {
   UnixStream c;
   c.fd = s->fd;
