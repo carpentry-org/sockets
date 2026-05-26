@@ -110,11 +110,12 @@ void UnixStream_set_MINUS_nonblocking(UnixStream* s) {
 }
 
 int UnixStream_send_MINUS_len_(UnixStream* s, String* msg, int len) {
+  if (len < 0 || len > (int)strlen(*msg)) return -1;
   return (int)send_all(s->fd, *msg, (size_t)len);
 }
 
 int UnixStream_send_MINUS_nb_(UnixStream* s, Array* data, int offset) {
-  if (offset >= data->len) return 0;
+  if (offset < 0 || offset >= data->len) return 0;
   ssize_t n = send(s->fd, (char*)data->data + offset,
                    (size_t)(data->len - offset), 0);
   if (n >= 0) return (int)n;

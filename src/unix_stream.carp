@@ -73,8 +73,9 @@
     (Fn [&UnixStream &String Int] Int)
     "UnixStream_send_MINUS_len_")
 
-  (doc send-len
-    "sends a string with known length (avoids strlen). Returns bytes sent or an error.")
+  (doc send-len "sends a string with known length (avoids strlen). `len` must be
+between 0 and the string’s length; returns an error otherwise.
+Returns bytes sent or an error.")
   (defn send-len [stream msg len]
     (let [n (send-len- stream msg len)]
       (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
