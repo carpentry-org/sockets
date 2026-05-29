@@ -67,6 +67,19 @@
     (let [n (send-bytes- stream data)]
       (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
+  (private send-len-)
+  (hidden send-len-)
+  (register send-len-
+    (Fn [&UnixStream &String Int] Int)
+    "UnixStream_send_MINUS_len_")
+
+  (doc send-len "sends a string with known length (avoids strlen). `len` must be
+between 0 and the string’s length; returns an error otherwise.
+Returns bytes sent or an error.")
+  (defn send-len [stream msg len]
+    (let [n (send-len- stream msg len)]
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
+
   (doc read
     "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
 Returns an empty string on connection close.")
@@ -83,7 +96,11 @@ Returns bytes read (0 = connection closed), or an error.")
       (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
   (register close (Fn [UnixStream] ()))
-  (doc close "closes the stream, releasing the file descriptor.")
+  (doc close "closes the stream, consuming it.")
+
+  (doc close! "closes the stream by reference, for use when the stream lives
+in a collection. Sets the fd to -1 to prevent double-close.")
+  (register close! (Fn [&UnixStream] ()) "UnixStream_close_MINUS_ref")
 
   (doc shutdown "shuts down the stream. 0 = reads, 1 = writes, 2 = both.")
   (register shutdown- (Fn [&UnixStream Int] ()) "UnixStream_shutdown_")
@@ -98,11 +115,58 @@ Returns bytes read (0 = connection closed), or an error.")
   (doc set-timeout "sets read and write timeouts in seconds.")
   (register set-timeout (Fn [&UnixStream Int] ()))
 
+  (doc set-nonblocking "puts the socket into non-blocking mode. After this
+call, `send-nb` and `read-append-nb` are the appropriate I/O entry points;
+the blocking variants will return `EAGAIN` instead of waiting.")
+  (register set-nonblocking (Fn [&UnixStream] ()))
+
+  (private send-nb-)
+  (hidden send-nb-)
+  (register send-nb-
+    (Fn [&UnixStream &(Array Byte) Int] Int)
+    "UnixStream_send_MINUS_nb_")
+
+  (doc send-nb "non-blocking send. Sends as many bytes as the kernel will
+accept right now from `data`, starting at `offset`.
+
+Returns `(Result Int String)`. The `Int` is the number of bytes actually
+written, which may be `0` if the socket is not currently writable. Re-arm
+write interest on the next event-loop iteration in that case.")
+  (defn send-nb [stream data offset]
+    (let [n (send-nb- stream data offset)]
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
+
+  (private read-append-nb-)
+  (hidden read-append-nb-)
+  (register read-append-nb-
+    (Fn [&UnixStream &(Array Byte)] Int)
+    "UnixStream_read_MINUS_append_MINUS_nb_")
+
+  (doc read-blocked "sentinel returned by `read-append-nb` when no data is
+currently available on a non-blocking socket.")
+  (def read-blocked -2)
+
+  (doc read-append-nb "non-blocking append-read. Reads whatever the kernel
+has buffered into `buf`, growing it as needed.
+
+Returns `(Result Int String)`. The `Int` is one of:
+
+- `> 0` bytes appended to `buf`,
+- `0` peer closed cleanly (EOF),
+- `read-blocked` (-2) socket has no data right now, retry on the next
+  readable event.")
+  (defn read-append-nb [stream buf]
+    (let [n (read-append-nb- stream buf)]
+      (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
+
   (doc peer-path "returns the path of the remote peer socket.")
   (register peer-path (Fn [&UnixStream] String))
 
   (register copy (Fn [&UnixStream] UnixStream))
   (implements copy UnixStream.copy)
+
+  (register prn (Fn [UnixStream] String) "UnixStream_prn_")
+  (implements prn UnixStream.prn)
 
   (defn poll-fd [s] (fd- s))
   (implements poll-fd UnixStream.poll-fd)
