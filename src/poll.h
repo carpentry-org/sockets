@@ -35,7 +35,10 @@ PollEvent PollEvent_copy(PollEvent* e) {
  * Platform-specific Poll implementation
  * -------------------------------------------------------------------------- */
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#if defined(CARP_FORCE_POLL)
+#define CARP_USE_POLL 1
+#include <poll.h>
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #define CARP_USE_KQUEUE 1
 #include <sys/event.h>
 #elif defined(__linux__)
@@ -246,6 +249,9 @@ Poll Poll_create_() {
   p.capacity = 16;
   p.count = 0;
   p.fds = (struct pollfd*)CARP_MALLOC(p.capacity * sizeof(struct pollfd));
+  if (!p.fds) {
+    p.capacity = 0;
+  }
   return p;
 }
 
@@ -320,6 +326,10 @@ Array Poll_wait_(Poll* p, int timeout_ms) {
   result.len = ready;
   result.capacity = ready > 0 ? ready : 1;
   result.data = CARP_MALLOC(result.capacity * sizeof(PollEvent));
+  if (!result.data) {
+    result.len = 0; result.capacity = 0;
+    return result;
+  }
 
   int j = 0;
   for (int i = 0; i < p->count && j < ready; i++) {

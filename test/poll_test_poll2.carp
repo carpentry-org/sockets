@@ -1,0 +1,4 @@
+; Force the POSIX poll(2) backend regardless of platform, so CI can
+; exercise the fallback path even on Linux (epoll) and macOS (kqueue).
+(add-cflag "-DCARP_FORCE_POLL")
+(load "poll_test.carp")
