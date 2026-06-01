@@ -233,6 +233,10 @@ void Poll_close(Poll p) {
 
 #endif /* CARP_USE_EPOLL */
 
+bool Poll_wait_failed_(Array* a) {
+  return a->data == NULL;
+}
+
 Poll Poll_copy(Poll* p) {
   Poll c;
 #ifdef CARP_USE_KQUEUE
