@@ -77,6 +77,9 @@ for readiness. Uses kqueue on macOS/BSD and epoll on Linux.
   (private wait-)
   (hidden wait-)
   (register wait- (Fn [&Poll Int] (Array PollEvent)) "Poll_wait_")
+  (private wait-failed?)
+  (hidden wait-failed?)
+  (register wait-failed? (Fn [&(Array PollEvent)] Bool) "Poll_wait_failed_")
 
   ; -- public API --
 
@@ -121,7 +124,11 @@ Use `poll-read`, `poll-write`, or `poll-read-write`.")
 
   (doc wait "waits for events, blocking up to `timeout-ms` milliseconds.
 Pass -1 to block indefinitely. Returns `(Result (Array PollEvent) String)`.")
-  (defn wait [poll timeout-ms] (Result.Success (wait- poll timeout-ms)))
+  (defn wait [poll timeout-ms]
+    (let [events (wait- poll timeout-ms)]
+      (if (wait-failed? &events)
+        (Result.Error (System.error-text))
+        (Result.Success events))))
 
   (register close (Fn [Poll] ()))
   (doc close "closes the poll instance.")

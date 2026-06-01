@@ -2,6 +2,10 @@
 (load "../socket.carp")
 (use Test)
 
+(relative-include "poll_test_helpers.h")
+
+(defmodule PollTest (register make-invalid (Fn [] Poll) "Poll_make_invalid_"))
+
 (defn poll-accept-test []
   (match (TcpListener.bind "127.0.0.1" 0)
     (Result.Error _) false
@@ -76,6 +80,12 @@
                             (TcpListener.close listener)
                             false)))))))))
 
+(defn poll-error-test []
+  (let [bad (PollTest.make-invalid)]
+    (match (the (Result (Array PollEvent) String) (Poll.wait &bad 0))
+      (Result.Error _) (do (Poll.close bad) true)
+      (Result.Success _) (do (Poll.close bad) false))))
+
 (defn poll-timeout-test []
   (match (TcpListener.bind "127.0.0.1" 0)
     (Result.Error _) false
@@ -107,4 +117,8 @@
     (poll-read-test)
     "Poll detects stream readability when data arrives")
 
-  (assert-true test (poll-timeout-test) "Poll.wait returns empty on timeout"))
+  (assert-true test (poll-timeout-test) "Poll.wait returns empty on timeout")
+
+  (assert-true test
+    (poll-error-test)
+    "Poll.wait returns Result.Error on invalid poll fd"))
