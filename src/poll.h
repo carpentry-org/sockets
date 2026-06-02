@@ -123,7 +123,16 @@ Array Poll_wait_(Poll* p, int timeout_ms) {
 
   if (n > 0) {
     fds = (int*)CARP_MALLOC(n * sizeof(int));
+    if (!fds) {
+      result.len = 0; result.capacity = 0; result.data = NULL;
+      return result;
+    }
     flags = (int*)CARP_MALLOC(n * sizeof(int));
+    if (!flags) {
+      CARP_FREE(fds);
+      result.len = 0; result.capacity = 0; result.data = NULL;
+      return result;
+    }
 
     for (int i = 0; i < n; i++) {
       int fd = (int)events[i].ident;
@@ -150,6 +159,12 @@ Array Poll_wait_(Poll* p, int timeout_ms) {
   result.len = unique;
   result.capacity = unique > 0 ? unique : 1;
   result.data = CARP_MALLOC(result.capacity * sizeof(PollEvent));
+  if (!result.data) {
+    if (fds) CARP_FREE(fds);
+    if (flags) CARP_FREE(flags);
+    result.len = 0; result.capacity = 0;
+    return result;
+  }
 
   for (int i = 0; i < unique; i++) {
     PollEvent* e = &((PollEvent*)result.data)[i];
@@ -219,6 +234,10 @@ Array Poll_wait_(Poll* p, int timeout_ms) {
   result.len = n;
   result.capacity = n > 0 ? n : 1;
   result.data = CARP_MALLOC(result.capacity * sizeof(PollEvent));
+  if (!result.data) {
+    result.len = 0; result.capacity = 0;
+    return result;
+  }
 
   for (int i = 0; i < n; i++) {
     PollEvent* e = &((PollEvent*)result.data)[i];
