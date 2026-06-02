@@ -367,7 +367,12 @@ Poll Poll_copy(Poll* p) {
   c.capacity = p->capacity;
   if (p->fds && p->capacity > 0) {
     c.fds = (struct pollfd*)CARP_MALLOC((size_t)p->capacity * sizeof(struct pollfd));
-    memcpy(c.fds, p->fds, (size_t)p->count * sizeof(struct pollfd));
+    if (!c.fds) {
+      c.count = 0;
+      c.capacity = 0;
+    } else {
+      memcpy(c.fds, p->fds, (size_t)p->count * sizeof(struct pollfd));
+    }
   } else {
     c.fds = NULL;
   }
