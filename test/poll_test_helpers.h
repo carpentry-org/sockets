@@ -10,6 +10,10 @@ Poll Poll_make_invalid_() {
   p.kq = -1;
 #elif defined(CARP_USE_EPOLL)
   p.epfd = -1;
+#elif defined(CARP_USE_POLL)
+  p.fds = NULL;
+  p.count = 0;
+  p.capacity = 0;
 #endif
   return p;
 }

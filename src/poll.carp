@@ -37,7 +37,8 @@ Check `readable`, `writable`, and `error?` to see what happened on `fd`.")
 (register-type Poll)
 
 (doc Poll "is an I/O event multiplexer that monitors multiple file descriptors
-for readiness. Uses kqueue on macOS/BSD and epoll on Linux.
+for readiness. Uses kqueue on macOS/BSD, epoll on Linux, and POSIX poll(2)
+as a fallback on other platforms.
 
 ## Usage
 ```

@@ -35,7 +35,10 @@ PollEvent PollEvent_copy(PollEvent* e) {
  * Platform-specific Poll implementation
  * -------------------------------------------------------------------------- */
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#if defined(CARP_FORCE_POLL)
+#define CARP_USE_POLL 1
+#include <poll.h>
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
 #define CARP_USE_KQUEUE 1
 #include <sys/event.h>
 #elif defined(__linux__)
@@ -252,6 +255,122 @@ void Poll_close(Poll p) {
 
 #endif /* CARP_USE_EPOLL */
 
+#ifdef CARP_USE_POLL
+
+typedef struct {
+  struct pollfd *fds;
+  int count;
+  int capacity;
+} Poll;
+
+Poll Poll_create_() {
+  Poll p;
+  p.capacity = 16;
+  p.count = 0;
+  p.fds = (struct pollfd*)CARP_MALLOC(p.capacity * sizeof(struct pollfd));
+  if (!p.fds) {
+    p.capacity = 0;
+  }
+  return p;
+}
+
+int Poll_fd_(Poll* p) {
+  /* No kernel fd — return 0 if valid, -1 if not */
+  return (p->fds != NULL) ? 0 : -1;
+}
+
+int Poll_add_(Poll* p, int fd, int interest) {
+  if (p->count >= p->capacity) {
+    int new_cap = p->capacity * 2;
+    struct pollfd *new_fds = (struct pollfd*)CARP_MALLOC(new_cap * sizeof(struct pollfd));
+    if (!new_fds) return -1;
+    memcpy(new_fds, p->fds, (size_t)p->count * sizeof(struct pollfd));
+    CARP_FREE(p->fds);
+    p->fds = new_fds;
+    p->capacity = new_cap;
+  }
+  struct pollfd *pfd = &p->fds[p->count];
+  pfd->fd = fd;
+  pfd->events = 0;
+  if (interest & POLL_READ) pfd->events |= POLLIN;
+  if (interest & POLL_WRITE) pfd->events |= POLLOUT;
+  pfd->revents = 0;
+  p->count++;
+  return 0;
+}
+
+int Poll_modify_(Poll* p, int fd, int interest) {
+  for (int i = 0; i < p->count; i++) {
+    if (p->fds[i].fd == fd) {
+      p->fds[i].events = 0;
+      if (interest & POLL_READ) p->fds[i].events |= POLLIN;
+      if (interest & POLL_WRITE) p->fds[i].events |= POLLOUT;
+      return 0;
+    }
+  }
+  errno = ENOENT;
+  return -1;
+}
+
+int Poll_remove_(Poll* p, int fd) {
+  for (int i = 0; i < p->count; i++) {
+    if (p->fds[i].fd == fd) {
+      p->fds[i] = p->fds[p->count - 1];
+      p->count--;
+      return 0;
+    }
+  }
+  errno = ENOENT;
+  return -1;
+}
+
+Array Poll_wait_(Poll* p, int timeout_ms) {
+  Array result;
+  if (!p->fds) {
+    result.len = 0; result.capacity = 0; result.data = NULL;
+    return result;
+  }
+
+  int n = poll(p->fds, (nfds_t)p->count, timeout_ms);
+  if (n < 0) {
+    result.len = 0; result.capacity = 0; result.data = NULL;
+    return result;
+  }
+
+  int ready = 0;
+  for (int i = 0; i < p->count; i++) {
+    if (p->fds[i].revents != 0) ready++;
+  }
+
+  result.len = ready;
+  result.capacity = ready > 0 ? ready : 1;
+  result.data = CARP_MALLOC(result.capacity * sizeof(PollEvent));
+  if (!result.data) {
+    result.len = 0; result.capacity = 0;
+    return result;
+  }
+
+  int j = 0;
+  for (int i = 0; i < p->count && j < ready; i++) {
+    if (p->fds[i].revents == 0) continue;
+    PollEvent* e = &((PollEvent*)result.data)[j];
+    e->fd = p->fds[i].fd;
+    e->readable = (p->fds[i].revents & POLLIN) != 0;
+    e->writable = (p->fds[i].revents & POLLOUT) != 0;
+    e->error = (p->fds[i].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0;
+    j++;
+  }
+
+  result.len = j;
+  return result;
+}
+
+void Poll_close(Poll p) {
+  if (p.fds) CARP_FREE(p.fds);
+}
+
+#endif /* CARP_USE_POLL */
+
 bool Poll_wait_failed_(Array* a) {
   return a->data == NULL;
 }
@@ -262,6 +381,20 @@ Poll Poll_copy(Poll* p) {
   c.kq = p->kq;
 #elif defined(CARP_USE_EPOLL)
   c.epfd = p->epfd;
+#elif defined(CARP_USE_POLL)
+  c.count = p->count;
+  c.capacity = p->capacity;
+  if (p->fds && p->capacity > 0) {
+    c.fds = (struct pollfd*)CARP_MALLOC((size_t)p->capacity * sizeof(struct pollfd));
+    if (!c.fds) {
+      c.count = 0;
+      c.capacity = 0;
+    } else {
+      memcpy(c.fds, p->fds, (size_t)p->count * sizeof(struct pollfd));
+    }
+  } else {
+    c.fds = NULL;
+  }
 #endif
   return c;
 }
