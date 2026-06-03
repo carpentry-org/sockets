@@ -7,12 +7,21 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #define SOCK_BUF_SIZE 4096
+
+/* A write to a peer that has closed/reset the connection otherwise raises
+   SIGPIPE, which by default kills the whole process. Ignore it at load so
+   send/write return EPIPE instead. Runs before main via the constructor. */
+__attribute__((constructor))
+static void carp_sock_ignore_sigpipe(void) {
+  signal(SIGPIPE, SIG_IGN);
+}
 
 __attribute__((unused))
 static String sock_error_string() {
