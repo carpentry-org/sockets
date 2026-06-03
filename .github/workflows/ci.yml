@@ -26,6 +26,17 @@ jobs:
           carp -b test/unix_test.carp
           carp -b test/poll_test.carp
 
+      - name: Run tests
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          # carp -x runs each suite; deftest's main returns the failure count as
+          # the exit code, so any failure fails the job. All suites are loopback
+          # only (127.0.0.1 / unix sockets), so no external network is needed.
+          carp -x test/tcp_test.carp
+          carp -x test/unix_test.carp
+          carp -x test/poll_test.carp
+
       - name: Install angler
         run: |
           set -euo pipefail
