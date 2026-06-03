@@ -33,6 +33,112 @@
                         (UnixListener.close listener)
                         false))))))))
 
+(defn unix-nb-roundtrip []
+  (let [path @"/tmp/carp_test_unix_nb.sock"]
+    (match (UnixListener.bind &path)
+      (Result.Error _) false
+      (Result.Success listener)
+        (match (UnixStream.connect &path)
+          (Result.Error _) (do (UnixListener.close listener) false)
+          (Result.Success client)
+            (match (UnixListener.accept &listener)
+              (Result.Error _)
+                (do
+                  (UnixStream.close client)
+                  (UnixListener.close listener)
+                  false)
+              (Result.Success conn)
+                (let-do [buf (the (Array Byte) (Array.allocate 1024))
+                         payload (the (Array Byte)
+                                      [(Char.to-byte \h) (Char.to-byte \i)])
+                         ok true]
+                  (UnixStream.set-nonblocking &client)
+                  ; nothing to read yet -> read-blocked sentinel
+                  (match (UnixStream.read-append-nb &client &buf)
+                    (Result.Success n)
+                      (when (/= n UnixStream.read-blocked) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; peer writes, we should be able to read it
+                  (ignore (UnixStream.send &conn "ping"))
+                  (System.sleep-micros 50000)
+                  (match (UnixStream.read-append-nb &client &buf)
+                    (Result.Success n) (when (/= n 4) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; non-blocking send returns bytes written
+                  (match (UnixStream.send-nb &client &payload 0)
+                    (Result.Success n) (when (/= n 2) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; send-nb with offset skips leading bytes
+                  (match (UnixStream.send-nb &client &payload 1)
+                    (Result.Success n) (when (/= n 1) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  ; send-nb with negative offset returns 0 (guard)
+                  (match (UnixStream.send-nb &client &payload -1)
+                    (Result.Success n) (when (/= n 0) (set! ok false))
+                    (Result.Error _) (set! ok false))
+                  (UnixStream.close client)
+                  (UnixStream.close conn)
+                  (UnixListener.close listener)
+                  ok))))))
+
+(defn unix-send-len-test []
+  (let [path @"/tmp/carp_test_unix_sendlen.sock"]
+    (match (UnixListener.bind &path)
+      (Result.Error _) false
+      (Result.Success listener)
+        (match (UnixStream.connect &path)
+          (Result.Error _) (do (UnixListener.close listener) false)
+          (Result.Success client)
+            (match (UnixListener.accept &listener)
+              (Result.Error _)
+                (do
+                  (UnixStream.close client)
+                  (UnixListener.close listener)
+                  false)
+              (Result.Success conn)
+                (do
+                  ; send only first 3 bytes of "hello"
+                  (ignore (UnixStream.send-len &client "hello" 3))
+                  (match (the (Result String String) (UnixStream.read &conn))
+                    (Result.Success msg)
+                      (let-do [ok (= &msg "hel")]
+                        (UnixStream.close conn)
+                        (UnixStream.close client)
+                        (UnixListener.close listener)
+                        ok)
+                    _
+                      (do
+                        (UnixStream.close conn)
+                        (UnixStream.close client)
+                        (UnixListener.close listener)
+                        false))))))))
+
+(defn unix-close-ref-test []
+  (let [path @"/tmp/carp_test_unix_closeref.sock"]
+    (match (UnixListener.bind &path)
+      (Result.Error _) false
+      (Result.Success listener)
+        (match (UnixStream.connect &path)
+          (Result.Error _) (do (UnixListener.close listener) false)
+          (Result.Success client)
+            (match (UnixListener.accept &listener)
+              (Result.Error _)
+                (do
+                  (UnixStream.close client)
+                  (UnixListener.close listener)
+                  false)
+              (Result.Success conn)
+                (do
+                  ; close! should work on a reference
+                  (UnixStream.close! &conn)
+                  ; the stream is now closed; send should fail
+                  (let-do [ok (match (UnixStream.send &conn "test")
+                             (Result.Error _) true
+                             _ false)]
+                    (UnixStream.close client)
+                    (UnixListener.close listener)
+                    ok)))))))
+
 (deftest test
   (assert-true test
     (match (UnixListener.bind "/tmp/carp_test_unix2.sock")
@@ -46,4 +152,14 @@
       _ false)
     "UnixStream.connect fails on nonexistent path")
 
-  (assert-true test (unix-roundtrip) "Unix socket roundtrip: send and receive"))
+  (assert-true test (unix-roundtrip) "Unix socket roundtrip: send and receive")
+
+  (assert-true test
+    (unix-nb-roundtrip)
+    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes")
+
+  (assert-true test
+    (unix-send-len-test)
+    "send-len sends only the specified number of bytes")
+
+  (assert-true test (unix-close-ref-test) "close! closes stream by reference"))
