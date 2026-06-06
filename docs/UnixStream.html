@@ -111,7 +111,28 @@ Takes ownership of the stream — the BufReader will close it when deleted.</p>
                         
                     </span>
                     <p class="doc">
-                        <p>closes the stream, releasing the file descriptor.</p>
+                        <p>closes the stream, consuming it.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#close!">
+                        <h3 id="close!">
+                            close!
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UnixStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>closes the stream by reference, for use when the stream lives
+in a collection. Sets the fd to -1 to prevent double-close.</p>
 
                     </p>
                 </div>
@@ -194,6 +215,25 @@ Takes ownership of the stream — the BufReader will close it when deleted.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#prn">
+                        <h3 id="prn">
+                            prn
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [UnixStream] String)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#read">
                         <h3 id="read">
                             read
@@ -232,6 +272,55 @@ Returns an empty string on connection close.</p>
                     <p class="doc">
                         <p>reads from the stream and appends to an existing byte buffer.
 Returns bytes read (0 = connection closed), or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read-append-nb">
+                        <h3 id="read-append-nb">
+                            read-append-nb
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UnixStream a), (Ref (Array Byte) b)] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (read-append-nb stream buf)
+                    </pre>
+                    <p class="doc">
+                        <p>non-blocking append-read. Reads whatever the kernel
+has buffered into <code>buf</code>, growing it as needed.</p>
+<p>Returns <code>(Result Int String)</code>. The <code>Int</code> is one of:</p>
+<ul>
+<li><code>&gt; 0</code> bytes appended to <code>buf</code>,</li>
+<li><code>0</code> peer closed cleanly (EOF),</li>
+<li><code>read-blocked</code> (-2) socket has no data right now, retry on the next
+readable event.</li>
+</ul>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#read-blocked">
+                        <h3 id="read-blocked">
+                            read-blocked
+                        </h3>
+                    </a>
+                    <div class="description">
+                        def
+                    </div>
+                    <p class="sig">
+                        Int
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>sentinel returned by <code>read-append-nb</code> when no data is
+currently available on a non-blocking socket.</p>
 
                     </p>
                 </div>
@@ -292,6 +381,74 @@ Returns bytes read (0 = connection closed), or an error.</p>
                     </pre>
                     <p class="doc">
                         <p>sends binary data over the stream. Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send-len">
+                        <h3 id="send-len">
+                            send-len
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UnixStream a), (Ref String b), Int] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-len stream msg len)
+                    </pre>
+                    <p class="doc">
+                        <p>sends a string with known length (avoids strlen). <code>len</code> must be
+between 0 and the string’s length; returns an error otherwise.
+Returns bytes sent or an error.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#send-nb">
+                        <h3 id="send-nb">
+                            send-nb
+                        </h3>
+                    </a>
+                    <div class="description">
+                        defn
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UnixStream a), (Ref (Array Byte) b), Int] (Result Int String))
+                    </p>
+                    <pre class="args">
+                        (send-nb stream data offset)
+                    </pre>
+                    <p class="doc">
+                        <p>non-blocking send. Sends as many bytes as the kernel will
+accept right now from <code>data</code>, starting at <code>offset</code>.</p>
+<p>Returns <code>(Result Int String)</code>. The <code>Int</code> is the number of bytes actually
+written, which may be <code>0</code> if the socket is not currently writable. Re-arm
+write interest on the next event-loop iteration in that case.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
+                    <a class="anchor" href="#set-nonblocking">
+                        <h3 id="set-nonblocking">
+                            set-nonblocking
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UnixStream a)] ())
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>puts the socket into non-blocking mode. After this
+call, <code>send-nb</code> and <code>read-append-nb</code> are the appropriate I/O entry points;
+the blocking variants will return <code>EAGAIN</code> instead of waiting.</p>
 
                     </p>
                 </div>
