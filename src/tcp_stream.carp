@@ -42,11 +42,11 @@ and accepted server connections.
     "TcpStream_send_MINUS_len_")
   (private read-)
   (hidden read-)
-  (register read- (Fn [&TcpStream] String) "TcpStream_read_")
+  (register read- (Fn [&TcpStream &Int] String) "TcpStream_read_")
   (private read-bytes-)
   (hidden read-bytes-)
   (register read-bytes-
-    (Fn [&TcpStream] (Array Byte))
+    (Fn [&TcpStream &Int] (Array Byte))
     "TcpStream_read_MINUS_bytes_")
   (private read-append-)
   (hidden read-append-)
@@ -82,10 +82,18 @@ and accepted server connections.
   (doc read
     "reads up to 4096 bytes from the stream. Returns the data as a string, or an error.
 Returns an empty string on connection close.")
-  (defn read [stream] (let [s (read- stream)] (Result.Success s)))
+  (defn read [stream]
+    (let [status 0
+          data (read- stream &status)]
+      (if (< status 0) (Result.Error (System.error-text)) (Result.Success data))))
 
-  (doc read-bytes "reads up to 4096 bytes as a byte array.")
-  (defn read-bytes [stream] (Result.Success (read-bytes- stream)))
+  (doc read-bytes
+    "reads up to 4096 bytes as a byte array. Returns an empty array on
+connection close, or an error if the read failed.")
+  (defn read-bytes [stream]
+    (let [status 0
+          data (read-bytes- stream &status)]
+      (if (< status 0) (Result.Error (System.error-text)) (Result.Success data))))
 
   (doc read-append
     "reads from the stream and appends to an existing byte buffer.

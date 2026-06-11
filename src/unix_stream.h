@@ -39,23 +39,31 @@ int UnixStream_send_MINUS_bytes_(UnixStream* s, Array* data) {
   return (int)send_all(s->fd, (const char*)data->data, data->len);
 }
 
-String UnixStream_read_(UnixStream* s) {
+String UnixStream_read_(UnixStream* s, int *status) {
   String buf = CARP_MALLOC(SOCK_BUF_SIZE + 1);
   ssize_t r = read(s->fd, buf, SOCK_BUF_SIZE);
-  if (r < 0) {
-    buf[0] = '\0';
+  if (r > 0) {
+    buf[r] = '\0';
+    *status = (int)r;
     return buf;
   }
-  buf[r] = '\0';
+  buf[0] = '\0';
+  *status = r == 0 ? 0 : -1;
   return buf;
 }
 
-Array UnixStream_read_MINUS_bytes_(UnixStream* s) {
+Array UnixStream_read_MINUS_bytes_(UnixStream* s, int *status) {
   Array buf;
   buf.capacity = SOCK_BUF_SIZE;
   buf.data = CARP_MALLOC(SOCK_BUF_SIZE);
   ssize_t r = read(s->fd, buf.data, SOCK_BUF_SIZE);
-  buf.len = r < 0 ? 0 : (int)r;
+  if (r > 0) {
+    buf.len = (int)r;
+    *status = (int)r;
+    return buf;
+  }
+  buf.len = 0;
+  *status = r == 0 ? 0 : -1;
   return buf;
 }
 
