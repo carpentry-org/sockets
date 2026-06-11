@@ -55,23 +55,31 @@ int TcpStream_send_MINUS_len_(TcpStream* s, String* msg, int len) {
   return (int)send_all(s->fd, *msg, (size_t)len);
 }
 
-String TcpStream_read_(TcpStream* s) {
+String TcpStream_read_(TcpStream* s, int *status) {
   String buf = CARP_MALLOC(SOCK_BUF_SIZE + 1);
   ssize_t r = read(s->fd, buf, SOCK_BUF_SIZE);
-  if (r < 0) {
-    buf[0] = '\0';
+  if (r > 0) {
+    buf[r] = '\0';
+    *status = (int)r;
     return buf;
   }
-  buf[r] = '\0';
+  buf[0] = '\0';
+  *status = r == 0 ? 0 : -1;
   return buf;
 }
 
-Array TcpStream_read_MINUS_bytes_(TcpStream* s) {
+Array TcpStream_read_MINUS_bytes_(TcpStream* s, int *status) {
   Array buf;
   buf.capacity = SOCK_BUF_SIZE;
   buf.data = CARP_MALLOC(SOCK_BUF_SIZE);
   ssize_t r = read(s->fd, buf.data, SOCK_BUF_SIZE);
-  buf.len = r < 0 ? 0 : (int)r;
+  if (r > 0) {
+    buf.len = (int)r;
+    *status = (int)r;
+    return buf;
+  }
+  buf.len = 0;
+  *status = r == 0 ? 0 : -1;
   return buf;
 }
 
