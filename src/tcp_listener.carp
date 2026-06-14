@@ -46,7 +46,7 @@ Returns `(Result TcpListener String)`.")
 Blocks until a client connects. Returns `(Result TcpStream String)`.")
   (defn accept [listener]
     (let [s (accept- listener)]
-      (if (= (TcpStream.fd- &s) -1)
+      (if (= (TcpStream.poll-fd &s) -1)
         (Result.Error (System.error-text))
         (Result.Success s))))
 

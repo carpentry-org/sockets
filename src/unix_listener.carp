@@ -46,7 +46,7 @@ Returns `(Result UnixListener String)`.")
 Blocks until a client connects. Returns `(Result UnixStream String)`.")
   (defn accept [listener]
     (let [s (accept- listener)]
-      (if (= (UnixStream.fd- &s) -1)
+      (if (= (UnixStream.poll-fd &s) -1)
         (Result.Error (System.error-text))
         (Result.Success s))))
 
