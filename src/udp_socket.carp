@@ -19,7 +19,6 @@
 ```")
 
 (defmodule UdpSocket
-  ; -- private C bindings --
   (private bind-)
   (hidden bind-)
   (register bind- (Fn [&String Int] UdpSocket) "UdpSocket_bind_")
@@ -36,8 +35,6 @@
   (register recv-
     (Fn [&UdpSocket &(Array Byte) &String &Int] Int)
     "UdpSocket_recv_")
-
-  ; -- public API --
 
   (doc bind "binds a UDP socket to the given address and port.
 Returns `(Result UdpSocket String)`.")

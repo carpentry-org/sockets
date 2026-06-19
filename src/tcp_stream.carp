@@ -20,7 +20,6 @@ and accepted server connections.
 ```")
 
 (defmodule TcpStream
-  ; -- private C bindings --
   (private connect-)
   (hidden connect-)
   (register connect- (Fn [&String Int] TcpStream) "TcpStream_connect_")
@@ -53,8 +52,6 @@ and accepted server connections.
   (register read-append-
     (Fn [&TcpStream &(Array Byte)] Int)
     "TcpStream_read_MINUS_append_")
-
-  ; -- public API --
 
   (doc connect
     "connects to a remote TCP address. Returns `(Result TcpStream String)`.")

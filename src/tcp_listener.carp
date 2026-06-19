@@ -22,7 +22,6 @@
 ```")
 
 (defmodule TcpListener
-  ; -- private C bindings --
   (private bind-)
   (hidden bind-)
   (register bind- (Fn [&String Int] TcpListener) "TcpListener_bind_")
@@ -32,8 +31,6 @@
   (private accept-)
   (hidden accept-)
   (register accept- (Fn [&TcpListener] TcpStream) "TcpListener_accept_")
-
-  ; -- public API --
 
   (doc bind "binds a TCP listener to the given address and port.
 The socket is set to reuse address/port and starts listening immediately.

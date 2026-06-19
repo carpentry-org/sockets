@@ -1,13 +1,5 @@
 (relative-include "poll.h")
 
-; ---------------------------------------------------------------------------
-; Interface — implement for any type you want to use with Poll
-; ---------------------------------------------------------------------------
-
-; ---------------------------------------------------------------------------
-; PollEvent — result of a poll wait
-; ---------------------------------------------------------------------------
-
 (register-type PollEvent)
 
 (doc PollEvent "represents a readiness notification from `Poll.wait`.
@@ -22,17 +14,9 @@ Check `readable`, `writable`, and `error?` to see what happened on `fd`.")
   (register copy (Fn [&PollEvent] PollEvent))
   (implements copy PollEvent.copy))
 
-; ---------------------------------------------------------------------------
-; Interest constants
-; ---------------------------------------------------------------------------
-
 (def poll-read 1)
 (def poll-write 2)
 (def poll-read-write 3)
-
-; ---------------------------------------------------------------------------
-; Poll — I/O multiplexer (kqueue on macOS, epoll on Linux)
-; ---------------------------------------------------------------------------
 
 (register-type Poll)
 
@@ -45,9 +29,7 @@ as a fallback on other platforms.
 (match (Poll.create)
   (Result.Success poll)
     (do
-      ; Watch a listener for incoming connections
       (Poll.add-read &poll &listener)
-      ; Wait up to 1 second
       (match (Poll.wait &poll 1000)
         (Result.Success events)
           (Array.for &events &(fn [e]
@@ -59,7 +41,6 @@ as a fallback on other platforms.
 ```")
 
 (defmodule Poll
-  ; -- private C bindings --
   (private create-)
   (hidden create-)
   (register create- (Fn [] Poll) "Poll_create_")
@@ -81,8 +62,6 @@ as a fallback on other platforms.
   (private wait-failed?)
   (hidden wait-failed?)
   (register wait-failed? (Fn [&(Array PollEvent)] Bool) "Poll_wait_failed_")
-
-  ; -- public API --
 
   (doc create "creates a new Poll instance. Returns `(Result Poll String)`.")
   (defn create []

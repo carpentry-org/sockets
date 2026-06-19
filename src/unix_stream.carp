@@ -19,7 +19,6 @@
 ```")
 
 (defmodule UnixStream
-  ; -- private C bindings --
   (private connect-)
   (hidden connect-)
   (register connect- (Fn [&String] UnixStream) "UnixStream_connect_")
@@ -47,8 +46,6 @@
   (register read-append-
     (Fn [&UnixStream &(Array Byte)] Int)
     "UnixStream_read_MINUS_append_")
-
-  ; -- public API --
 
   (doc connect
     "connects to a Unix domain socket at the given path. Returns `(Result UnixStream String)`.")

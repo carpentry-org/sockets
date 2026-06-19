@@ -303,7 +303,7 @@ in a collection. Sets the fd to -1 to prevent double-close.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref TcpStream a)] (Result String b))
+                        (Fn [(Ref TcpStream a)] (Result String String))
                     </p>
                     <pre class="args">
                         (read stream)
@@ -394,13 +394,14 @@ currently available on a non-blocking socket.</p>
                         defn
                     </div>
                     <p class="sig">
-                        (Fn [(Ref TcpStream a)] (Result (Array Byte) b))
+                        (Fn [(Ref TcpStream a)] (Result (Array Byte) String))
                     </p>
                     <pre class="args">
                         (read-bytes stream)
                     </pre>
                     <p class="doc">
-                        <p>reads up to 4096 bytes as a byte array.</p>
+                        <p>reads up to 4096 bytes as a byte array. Returns an empty array on
+connection close, or an error if the read failed.</p>
 
                     </p>
                 </div>

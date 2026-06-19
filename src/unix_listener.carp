@@ -22,7 +22,6 @@
 ```")
 
 (defmodule UnixListener
-  ; -- private C bindings --
   (private bind-)
   (hidden bind-)
   (register bind- (Fn [&String] UnixListener) "UnixListener_bind_")
@@ -32,8 +31,6 @@
   (private accept-)
   (hidden accept-)
   (register accept- (Fn [&UnixListener] UnixStream) "UnixListener_accept_")
-
-  ; -- public API --
 
   (doc bind "binds a Unix domain socket listener to the given path.
 Unlinks any existing socket at that path first, then starts listening.
