@@ -43,8 +43,10 @@ int UdpSocket_send_MINUS_to_(UdpSocket* u, String* host, int port, Array* data) 
 
 /* Returns bytes received, fills sender address/port. -1 on error. */
 int UdpSocket_recv_(UdpSocket* u, Array* buf, String* sender_out, int* port_out) {
-  if ((int)buf->capacity < SOCK_BUF_SIZE) {
-    buf->data = CARP_REALLOC(buf->data, SOCK_BUF_SIZE);
+  if (buf->capacity < (size_t)SOCK_BUF_SIZE) {
+    void *grown = CARP_REALLOC(buf->data, SOCK_BUF_SIZE);
+    if (!grown) return -1;
+    buf->data = grown;
     buf->capacity = SOCK_BUF_SIZE;
   }
   struct sockaddr_storage from;
