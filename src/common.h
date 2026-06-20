@@ -81,6 +81,31 @@ static int resolve_address(const char* host, int port, int socktype,
   return 0;
 }
 
+/* Ensure buf has at least SOCK_BUF_SIZE bytes free for appending.
+   Returns 0 on success, -1 on allocation failure. */
+__attribute__((unused))
+static int buf_grow_for_read(Array* buf) {
+  if (buf->capacity - buf->len >= (size_t)SOCK_BUF_SIZE) return 0;
+  size_t new_cap = (buf->len + (size_t)SOCK_BUF_SIZE) * 2;
+  void *grown = CARP_REALLOC(buf->data, new_cap);
+  if (!grown) return -1;
+  buf->data = grown;
+  buf->capacity = new_cap;
+  return 0;
+}
+
+/* Ensure buf has at least min_cap total capacity.
+   Returns 0 on success, -1 on allocation failure. */
+__attribute__((unused))
+static int buf_ensure(Array* buf, size_t min_cap) {
+  if (buf->capacity >= min_cap) return 0;
+  void *grown = CARP_REALLOC(buf->data, min_cap);
+  if (!grown) return -1;
+  buf->data = grown;
+  buf->capacity = min_cap;
+  return 0;
+}
+
 /* Send all bytes, looping on partial writes. Returns total sent or -1. */
 __attribute__((unused))
 static ssize_t send_all(int fd, const char* data, size_t len) {

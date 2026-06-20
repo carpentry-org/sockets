@@ -68,13 +68,7 @@ Array UnixStream_read_MINUS_bytes_(UnixStream* s, int *status) {
 }
 
 int UnixStream_read_MINUS_append_(UnixStream* s, Array* buf) {
-  if (buf->capacity - buf->len < (size_t)SOCK_BUF_SIZE) {
-    size_t new_cap = (buf->len + (size_t)SOCK_BUF_SIZE) * 2;
-    void *grown = CARP_REALLOC(buf->data, new_cap);
-    if (!grown) return -1;
-    buf->data = grown;
-    buf->capacity = new_cap;
-  }
+  if (buf_grow_for_read(buf) != 0) return -1;
   ssize_t r = read(s->fd, (char*)buf->data + buf->len, SOCK_BUF_SIZE);
   if (r > 0) buf->len += (int)r;
   return (int)r;
@@ -134,13 +128,7 @@ int UnixStream_send_MINUS_nb_(UnixStream* s, Array* data, int offset) {
 }
 
 int UnixStream_read_MINUS_append_MINUS_nb_(UnixStream* s, Array* buf) {
-  if (buf->capacity - buf->len < (size_t)SOCK_BUF_SIZE) {
-    size_t new_cap = (buf->len + (size_t)SOCK_BUF_SIZE) * 2;
-    void *grown = CARP_REALLOC(buf->data, new_cap);
-    if (!grown) return -1;
-    buf->data = grown;
-    buf->capacity = new_cap;
-  }
+  if (buf_grow_for_read(buf) != 0) return -1;
   ssize_t r = read(s->fd, (char*)buf->data + buf->len, SOCK_BUF_SIZE);
   if (r > 0) { buf->len += (int)r; return (int)r; }
   if (r == 0) return 0;
