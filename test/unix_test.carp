@@ -58,13 +58,11 @@
                     (Result.Success n)
                       (when (/= n UnixStream.read-blocked) (set! ok false))
                     (Result.Error _) (set! ok false))
-                  ; peer writes, we should be able to read it
                   (ignore (UnixStream.send &conn "ping"))
                   (System.sleep-micros 50000)
                   (match (UnixStream.read-append-nb &client &buf)
                     (Result.Success n) (when (/= n 4) (set! ok false))
                     (Result.Error _) (set! ok false))
-                  ; non-blocking send returns bytes written
                   (match (UnixStream.send-nb &client &payload 0)
                     (Result.Success n) (when (/= n 2) (set! ok false))
                     (Result.Error _) (set! ok false))
@@ -129,9 +127,7 @@
                   false)
               (Result.Success conn)
                 (do
-                  ; close! should work on a reference
                   (UnixStream.close! &conn)
-                  ; the stream is now closed; send should fail
                   (let-do [ok (match (UnixStream.send &conn "test")
                              (Result.Error _) true
                              _ false)]

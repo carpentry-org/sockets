@@ -84,13 +84,11 @@
                     (Result.Success n)
                       (when (/= n TcpStream.read-blocked) (set! ok false))
                     (Result.Error _) (set! ok false))
-                  ; peer writes, we should be able to read it
                   (ignore (TcpStream.send &conn "ping"))
                   (System.sleep-micros 50000)
                   (match (TcpStream.read-append-nb &client &buf)
                     (Result.Success n) (when (/= n 4) (set! ok false))
                     (Result.Error _) (set! ok false))
-                  ; non-blocking send returns bytes written
                   (match (TcpStream.send-nb &client &payload 0)
                     (Result.Success n) (when (/= n 2) (set! ok false))
                     (Result.Error _) (set! ok false))
