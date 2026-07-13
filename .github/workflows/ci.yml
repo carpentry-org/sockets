@@ -25,6 +25,7 @@ jobs:
           carp -b test/tcp_test.carp
           carp -b test/unix_test.carp
           carp -b test/poll_test.carp
+          carp -b test/udp_test.carp
 
       - name: Run tests
         timeout-minutes: 6
@@ -36,6 +37,7 @@ jobs:
           carp -x test/tcp_test.carp
           carp -x test/unix_test.carp
           carp -x test/poll_test.carp
+          carp -x test/udp_test.carp
 
       - name: Install angler
         run: |
