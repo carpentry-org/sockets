@@ -1,0 +1,49 @@
+(load "Test.carp")
+(load "../socket.carp")
+(use Test)
+
+; Sends `size` bytes (all 0x41) to a loopback UDP socket bound to an
+; OS-assigned port and reports whether exactly that many bytes come
+; back unchanged. This is the regression check for datagrams larger
+; than the old fixed 4096-byte receive buffer, which recvfrom silently
+; truncated.
+(defn udp-echoes-intact? [size]
+  (match (UdpSocket.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success sock)
+      (let-do [port (UdpSocket.local-port &sock)
+               payload (Array.replicate size &65b)
+               ok false]
+        (UdpSocket.set-timeout &sock 2)
+        (match (UdpSocket.send-to &sock "127.0.0.1" port &payload)
+          (Result.Success _)
+            (match (UdpSocket.recv-from &sock)
+              (Result.Success p)
+                (let [got (Pair.a &p)]
+                  (set! ok
+                        (and (= size (Array.length got))
+                             (= 65b @(Array.unsafe-nth got (- size 1))))))
+              (Result.Error _) ())
+          (Result.Error _) ())
+        (UdpSocket.close sock)
+        ok)))
+
+(deftest test
+  (assert-true test
+    (match (UdpSocket.bind "127.0.0.1" 0)
+      (Result.Success sock)
+        (let-do [p (UdpSocket.local-port &sock)] (UdpSocket.close sock) (> p 0))
+      (Result.Error _) false)
+    "local-port reports the OS-assigned port after binding to 0")
+
+  (assert-true test
+    (udp-echoes-intact? 16)
+    "recv-from returns a small datagram intact")
+
+  (assert-true test
+    (udp-echoes-intact? 5000)
+    "recv-from returns a 5000-byte datagram whole (was truncated to 4096)")
+
+  (assert-true test
+    (udp-echoes-intact? 60000)
+    "recv-from returns a 60000-byte datagram whole"))

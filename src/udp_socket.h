@@ -33,6 +33,8 @@ UdpSocket UdpSocket_bind_(String* host, int port) {
 
 int UdpSocket_fd_(UdpSocket* u) { return u->fd; }
 
+int UdpSocket_local_MINUS_port(UdpSocket* u) { return sockaddr_port(&u->bound); }
+
 int UdpSocket_send_MINUS_to_(UdpSocket* u, String* host, int port, Array* data) {
   struct sockaddr_storage dest;
   socklen_t dest_len;
