@@ -47,11 +47,14 @@ Returns `(Result UdpSocket String)`.")
     (let [n (send-to- sock host port data)]
       (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))
 
-  (doc recv-from "receives data and the sender's address.
+  (doc recv-from "receives a datagram and the sender's address.
 Returns `(Result (Pair (Array Byte) String) String)` where the string is
 the sender's address in `ip:port` format.")
   (defn recv-from [sock]
-    (let-do [buf (the (Array Byte) (Array.allocate 4096))
+    ; A UDP datagram can carry up to 65535 bytes; size the buffer to the
+    ; maximum so a large datagram is received whole instead of truncated
+    ; (recvfrom silently discards whatever overflows the buffer).
+    (let-do [buf (the (Array Byte) (Array.allocate 65535))
              sender @""
              port 0
              n (recv- sock &buf &sender &port)]
@@ -64,6 +67,10 @@ the sender's address in `ip:port` format.")
 
   (doc set-timeout "sets read and write timeouts in seconds.")
   (register set-timeout (Fn [&UdpSocket Int] ()))
+
+  (doc local-port "returns the port the socket is bound to. Useful
+after binding to port `0` to discover the OS-assigned port.")
+  (register local-port (Fn [&UdpSocket] Int))
 
   (register copy (Fn [&UdpSocket] UdpSocket))
   (implements copy UdpSocket.copy)

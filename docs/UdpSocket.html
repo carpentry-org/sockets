@@ -123,6 +123,27 @@ Returns <code>(Result UdpSocket String)</code>.</p>
                     </p>
                 </div>
                 <div class="binder">
+                    <a class="anchor" href="#local-port">
+                        <h3 id="local-port">
+                            local-port
+                        </h3>
+                    </a>
+                    <div class="description">
+                        external
+                    </div>
+                    <p class="sig">
+                        (Fn [(Ref UdpSocket a)] Int)
+                    </p>
+                    <span>
+                        
+                    </span>
+                    <p class="doc">
+                        <p>returns the port the socket is bound to. Useful
+after binding to port <code>0</code> to discover the OS-assigned port.</p>
+
+                    </p>
+                </div>
+                <div class="binder">
                     <a class="anchor" href="#poll-fd">
                         <h3 id="poll-fd">
                             poll-fd
@@ -157,7 +178,7 @@ Returns <code>(Result UdpSocket String)</code>.</p>
                         (recv-from sock)
                     </pre>
                     <p class="doc">
-                        <p>receives data and the sender's address.
+                        <p>receives a datagram and the sender's address.
 Returns <code>(Result (Pair (Array Byte) String) String)</code> where the string is
 the sender's address in <code>ip:port</code> format.</p>
 
