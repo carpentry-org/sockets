@@ -80,21 +80,30 @@ int Poll_add_(Poll* p, int fd, int interest) {
   return kevent(p->kq, changes, nchanges, NULL, 0, NULL) < 0 ? -1 : 0;
 }
 
+/* Delete one filter, tolerating ENOENT.
+ *
+ * kevent() stops processing the changelist at the first entry that fails, so
+ * batching both deletes means an unarmed filter (ENOENT) prevents the other
+ * from ever being removed. A leaked EVFILT_WRITE then reports the socket
+ * writable forever, which an event loop sees as a write with no pending
+ * buffer. Issue the deletes separately so each is applied independently. */
+static void poll_kq_del(int kq, int fd, int16_t filter) {
+  struct kevent ch;
+  EV_SET(&ch, fd, filter, EV_DELETE, 0, 0, NULL);
+  kevent(kq, &ch, 1, NULL, 0, NULL); /* ENOENT is expected and harmless */
+}
+
 int Poll_modify_(Poll* p, int fd, int interest) {
   /* Remove both, then add desired */
-  struct kevent changes[4];
-  int n = 0;
-  EV_SET(&changes[n++], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  EV_SET(&changes[n++], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  kevent(p->kq, changes, n, NULL, 0, NULL); /* ignore errors from deleting non-existent */
+  poll_kq_del(p->kq, fd, EVFILT_READ);
+  poll_kq_del(p->kq, fd, EVFILT_WRITE);
   return Poll_add_(p, fd, interest);
 }
 
 int Poll_remove_(Poll* p, int fd) {
-  struct kevent changes[2];
-  EV_SET(&changes[0], fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  EV_SET(&changes[1], fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  kevent(p->kq, changes, 2, NULL, 0, NULL); /* ignore errors */
+  /* Separate calls, for the same reason as Poll_modify_ above. */
+  poll_kq_del(p->kq, fd, EVFILT_READ);
+  poll_kq_del(p->kq, fd, EVFILT_WRITE);
   return 0;
 }
 

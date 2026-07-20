@@ -6,7 +6,7 @@ and I/O multiplexing.
 ## Installation
 
 ```clojure
-(load "git@github.com:carpentry-org/socket@0.2.2")
+(load "git@github.com:carpentry-org/socket@0.2.3")
 ```
 
 ## Usage

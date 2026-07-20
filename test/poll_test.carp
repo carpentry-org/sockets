@@ -101,6 +101,43 @@
                   ok)
               _ (do (Poll.close poll) (TcpListener.close listener) false))))))
 
+; Regression: switching a socket from write to read interest must actually
+; drop write interest. kevent() stops processing its changelist at the first
+; failing entry, so deleting an unarmed filter used to skip the delete after
+; it and leak EVFILT_WRITE, leaving the socket writable forever.
+(defn poll-modify-drops-write-test []
+  (match (TcpListener.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success listener)
+      (match (Poll.create)
+        (Result.Error _) (do (TcpListener.close listener) false)
+        (Result.Success poll)
+          (let-do [port (TcpListener.local-port &listener)
+                   ok false]
+            (match (TcpStream.connect "127.0.0.1" port)
+              (Result.Error _) ()
+              (Result.Success client)
+                (let-do [fd (TcpStream.poll-fd &client)]
+                  ; arm write only, as an event loop does when flushing
+                  (ignore (Poll.add &poll fd poll-write))
+                  (ignore (Poll.wait &poll 100))
+                  ; switch to read interest: write interest must be gone
+                  (ignore (Poll.modify &poll fd poll-read))
+                  (match (the (Result (Array PollEvent) String)
+                              (Poll.wait &poll 100))
+                    (Result.Success events)
+                      (let-do [writable false]
+                        (for [i 0 (Array.length &events)]
+                          (when (PollEvent.writable
+                                  (Array.unsafe-nth &events i))
+                            (set! writable true)))
+                        (set! ok (not writable)))
+                    _ ())
+                  (TcpStream.close client)))
+            (Poll.close poll)
+            (TcpListener.close listener)
+            ok))))
+
 (deftest test
   (assert-true test
     (match (Poll.create) (Result.Success p) (do (Poll.close p) true) _ false)
@@ -118,4 +155,8 @@
 
   (assert-true test
     (poll-error-test)
-    "Poll.wait returns Result.Error on invalid poll fd"))
+    "Poll.wait returns Result.Error on invalid poll fd")
+
+  (assert-true test
+    (poll-modify-drops-write-test)
+    "Poll.modify to read interest drops write interest"))

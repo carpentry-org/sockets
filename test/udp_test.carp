@@ -45,5 +45,8 @@
     "recv-from returns a 5000-byte datagram whole (was truncated to 4096)")
 
   (assert-true test
-    (udp-echoes-intact? 60000)
-    "recv-from returns a 60000-byte datagram whole"))
+    ; Kept under macOS's default net.inet.udp.maxdgram (9216); above that
+    ; send-to fails with EMSGSIZE and recv-from is never reached, so a larger
+    ; size tests nothing here. Still twice the old 4096 buffer this guards.
+    (udp-echoes-intact? 8192)
+    "recv-from returns an 8192-byte datagram whole"))
