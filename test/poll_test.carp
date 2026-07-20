@@ -128,8 +128,7 @@
                     (Result.Success events)
                       (let-do [writable false]
                         (for [i 0 (Array.length &events)]
-                          (when (PollEvent.writable
-                                  (Array.unsafe-nth &events i))
+                          (when (PollEvent.writable (Array.unsafe-nth &events i))
                             (set! writable true)))
                         (set! ok (not writable)))
                     _ ())
