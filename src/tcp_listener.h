@@ -15,23 +15,8 @@ TcpListener TcpListener_bind_(String* host, int port) {
   l.addr_len = 0;
   memset(&l.addr, 0, sizeof(l.addr));
 
-  if (resolve_address(*host, port, SOCK_STREAM, &l.addr, &l.addr_len) != 0)
-    return l;
-
-  l.fd = socket(l.addr.ss_family, SOCK_STREAM, 0);
+  l.fd = bind_address(*host, port, SOCK_STREAM, &l.addr, &l.addr_len);
   if (l.fd < 0) return l;
-
-  int opt = 1;
-  setsockopt(l.fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-#ifdef SO_REUSEPORT
-  setsockopt(l.fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
-#endif
-
-  if (bind(l.fd, (struct sockaddr*)&l.addr, l.addr_len) < 0) {
-    close(l.fd);
-    l.fd = -1;
-    return l;
-  }
 
   if (listen(l.fd, 128) < 0) {
     close(l.fd);
