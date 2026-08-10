@@ -15,17 +15,8 @@ UdpSocket UdpSocket_bind_(String* host, int port) {
   u.bound_len = 0;
   memset(&u.bound, 0, sizeof(u.bound));
 
-  if (resolve_address(*host, port, SOCK_DGRAM, &u.bound, &u.bound_len) != 0)
-    return u;
-
-  u.fd = socket(u.bound.ss_family, SOCK_DGRAM, 0);
+  u.fd = bind_address(*host, port, SOCK_DGRAM, &u.bound, &u.bound_len);
   if (u.fd < 0) return u;
-
-  if (bind(u.fd, (struct sockaddr*)&u.bound, u.bound_len) < 0) {
-    close(u.fd);
-    u.fd = -1;
-    return u;
-  }
 
   getsockname(u.fd, (struct sockaddr*)&u.bound, &u.bound_len);
   return u;
@@ -38,7 +29,9 @@ int UdpSocket_local_MINUS_port(UdpSocket* u) { return sockaddr_port(&u->bound); 
 int UdpSocket_send_MINUS_to_(UdpSocket* u, String* host, int port, Array* data) {
   struct sockaddr_storage dest;
   socklen_t dest_len;
-  if (resolve_address(*host, port, SOCK_DGRAM, &dest, &dest_len) != 0) return -1;
+  if (resolve_address(*host, port, SOCK_DGRAM, u->bound.ss_family, &dest,
+                      &dest_len) != 0)
+    return -1;
   return (int)sendto(u->fd, data->data, data->len, 0,
                      (struct sockaddr*)&dest, dest_len);
 }

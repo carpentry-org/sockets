@@ -34,6 +34,8 @@
 
   (doc bind "binds a TCP listener to the given address and port.
 The socket is set to reuse address/port and starts listening immediately.
+When `addr` is a hostname that resolves to several addresses, each is tried
+in turn until one binds.
 Returns `(Result TcpListener String)`.")
   (defn bind [addr port]
     (let [l (bind- addr port)]

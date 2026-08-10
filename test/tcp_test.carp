@@ -2,6 +2,37 @@
 (load "../socket.carp")
 (use Test)
 
+(relative-include "addr_helpers.h")
+
+(defmodule AddrTest
+  (register stream-families (Fn [] Int) "AddrTest_stream_MINUS_families_")
+  (register occupy-first (Fn [] Int) "AddrTest_occupy_MINUS_first_")
+  (register occupied-port (Fn [Int] Int) "AddrTest_occupied_MINUS_port_")
+  (register release (Fn [Int] ()) "AddrTest_release_"))
+
+(defn bind-falls-back-to-next-candidate? []
+  (if (< (AddrTest.stream-families) 2)
+    (do
+      (IO.println "  skipped: localhost resolves to a single address family")
+      true)
+    (let [held (AddrTest.occupy-first)]
+      (cond
+        (= held -2)
+          (do
+            (IO.println "  skipped: the occupied address is rebindable here")
+            true)
+        (< held 0)
+          (do
+            (IO.println "  skipped: could not occupy the first candidate")
+            true)
+        (let-do [port (AddrTest.occupied-port held)
+                 ok false]
+          (match (TcpListener.bind "localhost" port)
+            (Result.Success l) (do (set! ok true) (TcpListener.close l))
+            (Result.Error _) ())
+          (AddrTest.release held)
+          ok)))))
+
 (defn tcp-roundtrip []
   (match (TcpListener.bind "127.0.0.1" 0)
     ; port 0 = OS assigns
@@ -145,4 +176,8 @@ line two
 
   (assert-true test
     (nb-roundtrip)
-    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes"))
+    "non-blocking I/O: read-blocked, then read 4 bytes, then send 2 bytes")
+
+  (assert-true test
+    (bind-falls-back-to-next-candidate?)
+    "bind tries the next candidate when the first address is taken"))

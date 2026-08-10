@@ -101,6 +101,8 @@ Blocks until a client connects. Returns <code>(Result TcpStream String)</code>.<
                     <p class="doc">
                         <p>binds a TCP listener to the given address and port.
 The socket is set to reuse address/port and starts listening immediately.
+When <code>addr</code> is a hostname that resolves to several addresses, each is tried
+in turn until one binds.
 Returns <code>(Result TcpListener String)</code>.</p>
 
                     </p>

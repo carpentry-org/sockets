@@ -59,11 +59,14 @@ static int sockaddr_port(struct sockaddr_storage* addr) {
   return 0;
 }
 
-/* Resolves host:port to a sockaddr_storage. Returns 0 on success, -1 on error. */
+/* Resolves host:port to a sockaddr_storage, preferring a candidate of family
+   prefer_family (AF_UNSPEC for no preference, falling back to the first
+   candidate). Returns 0 on success, -1 on error. */
 __attribute__((unused))
 static int resolve_address(const char* host, int port, int socktype,
-                           struct sockaddr_storage* out, socklen_t* out_len) {
-  struct addrinfo hints, *result;
+                           int prefer_family, struct sockaddr_storage* out,
+                           socklen_t* out_len) {
+  struct addrinfo hints, *result, *rp, *chosen;
   char port_str[16];
   snprintf(port_str, sizeof(port_str), "%d", port);
 
@@ -75,10 +78,65 @@ static int resolve_address(const char* host, int port, int socktype,
   if (getaddrinfo(host, port_str, &hints, &result) != 0) return -1;
   if (!result) return -1;
 
-  memcpy(out, result->ai_addr, result->ai_addrlen);
-  *out_len = result->ai_addrlen;
+  chosen = result;
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    if (rp->ai_family == prefer_family) {
+      chosen = rp;
+      break;
+    }
+  }
+
+  memcpy(out, chosen->ai_addr, chosen->ai_addrlen);
+  *out_len = chosen->ai_addrlen;
   freeaddrinfo(result);
   return 0;
+}
+
+/* Creates and binds a socket for host:port, trying every candidate
+   getaddrinfo returns and failing only when all of them do. Returns the
+   bound fd and fills out/out_len with its address, or returns -1. */
+__attribute__((unused))
+static int bind_address(const char* host, int port, int socktype,
+                        struct sockaddr_storage* out, socklen_t* out_len) {
+  struct addrinfo hints, *result, *rp;
+  char port_str[16];
+  snprintf(port_str, sizeof(port_str), "%d", port);
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = socktype;
+  hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
+
+  if (getaddrinfo(host, port_str, &hints, &result) != 0) return -1;
+  if (!result) return -1;
+
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    int fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (fd < 0) continue;
+
+    if (socktype == SOCK_STREAM) {
+      int opt = 1;
+      setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+#ifdef SO_REUSEPORT
+      setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+#endif
+    }
+
+    if (bind(fd, rp->ai_addr, rp->ai_addrlen) == 0) {
+      memcpy(out, rp->ai_addr, rp->ai_addrlen);
+      *out_len = rp->ai_addrlen;
+      freeaddrinfo(result);
+      return fd;
+    }
+
+    /* close() may overwrite the bind() errno the caller reports */
+    int err = errno;
+    close(fd);
+    errno = err;
+  }
+
+  freeaddrinfo(result);
+  return -1;
 }
 
 /* Ensure buf has at least SOCK_BUF_SIZE bytes free for appending.

@@ -37,12 +37,16 @@
     "UdpSocket_recv_")
 
   (doc bind "binds a UDP socket to the given address and port.
+When `addr` is a hostname that resolves to several addresses, each is tried
+in turn until one binds.
 Returns `(Result UdpSocket String)`.")
   (defn bind [addr port]
     (let [u (bind- addr port)]
       (if (= (fd- &u) -1) (Result.Error (System.error-text)) (Result.Success u))))
 
-  (doc send-to "sends data to a remote address. Returns bytes sent or an error.")
+  (doc send-to "sends data to a remote address. Returns bytes sent or an error.
+When `host` is a hostname that resolves to both an IPv4 and an IPv6 address,
+the one matching the socket's own family is used.")
   (defn send-to [sock host port data]
     (let [n (send-to- sock host port data)]
       (if (= n -1) (Result.Error (System.error-text)) (Result.Success n))))

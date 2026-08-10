@@ -2,6 +2,29 @@
 (load "../socket.carp")
 (use Test)
 
+(relative-include "addr_helpers.h")
+
+(defmodule AddrTest
+  (register dgram-ipv4 (Fn [] Int) "AddrTest_dgram_MINUS_ipv4_")
+  (register dgram-ipv6 (Fn [] Int) "AddrTest_dgram_MINUS_ipv6_"))
+
+(defn udp-hostname-roundtrip? [addr]
+  (match (UdpSocket.bind addr 0)
+    (Result.Error _) false
+    (Result.Success sock)
+      (let-do [port (UdpSocket.local-port &sock)
+               payload (Array.replicate 4 &65b)
+               ok false]
+        (UdpSocket.set-timeout &sock 2)
+        (match (UdpSocket.send-to &sock "localhost" port &payload)
+          (Result.Success _)
+            (match (UdpSocket.recv-from &sock)
+              (Result.Success p) (set! ok (= 4 (Array.length (Pair.a &p))))
+              (Result.Error _) ())
+          (Result.Error _) ())
+        (UdpSocket.close sock)
+        ok)))
+
 ; Sends `size` bytes (all 0x41) to a loopback UDP socket bound to an
 ; OS-assigned port and reports whether exactly that many bytes come
 ; back unchanged. This is the regression check for datagrams larger
@@ -49,4 +72,16 @@
     ; send-to fails with EMSGSIZE and recv-from is never reached, so a larger
     ; size tests nothing here. Still twice the old 4096 buffer this guards.
     (udp-echoes-intact? 8192)
-    "recv-from returns an 8192-byte datagram whole"))
+    "recv-from returns an 8192-byte datagram whole")
+
+  (assert-true test
+    (if (= 0 (AddrTest.dgram-ipv4))
+      (do (IO.println "  skipped: localhost has no IPv4 address") true)
+      (udp-hostname-roundtrip? "127.0.0.1"))
+    "send-to a dual-stack hostname reaches an IPv4-bound socket")
+
+  (assert-true test
+    (if (= 0 (AddrTest.dgram-ipv6))
+      (do (IO.println "  skipped: localhost has no IPv6 address") true)
+      (udp-hostname-roundtrip? "::1"))
+    "send-to a dual-stack hostname reaches an IPv6-bound socket"))
