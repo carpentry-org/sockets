@@ -1,11 +1,15 @@
-(load "socket.carp")
-(use Socket)
+(load "../socket.carp")
+
+(defn-do echo [client]
+  (match (TcpStream.read client)
+    (Result.Success msg) (IO.println &msg)
+    (Result.Error e) (IO.errorln &e))
+  (ignore (TcpStream.send client "hi")))
 
 (defn main []
-  (Socket.with-server sock "127.0.0.1" 8080
-    (if (Socket.valid? &sock)
-      (Socket.while-connection &sock client
-        (IO.println &(read &client))
-        (send &client "hi")
-        (IO.println "yay"))
-      (IO.errorln "Server couldn’t be started."))))
+  (match (TcpListener.bind "127.0.0.1" 8080)
+    (Result.Error e) (IO.errorln &e)
+    (Result.Success listener)
+      (do
+        (TcpListener.while-accept &listener client (echo &client))
+        (TcpListener.close listener))))
