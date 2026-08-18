@@ -1,10 +1,12 @@
-(load "socket.carp")
-(use Socket)
+(load "../socket.carp")
 
 (defn main []
-  (Socket.with-client sock "127.0.0.1" 8080
-    (if (Socket.valid? &sock)
+  (match (TcpStream.connect "127.0.0.1" 8080)
+    (Result.Error e) (IO.errorln &e)
+    (Result.Success stream)
       (do
-        (send-bytes &sock &[1b 2b 3b])
-        (IO.println &(str &(read-bytes &sock))))
-      (IO.errorln "client couldn’t be started."))))
+        (ignore (TcpStream.send-bytes &stream &[1b 2b 3b]))
+        (match (TcpStream.read-bytes &stream)
+          (Result.Success data) (println* &data)
+          (Result.Error e) (IO.errorln &e))
+        (TcpStream.close stream))))
