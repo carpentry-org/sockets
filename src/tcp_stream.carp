@@ -19,6 +19,32 @@ and accepted server connections.
   (Result.Error e) (IO.errorln &e))
 ```")
 
+(doc ConnectError "says why a TCP connection attempt failed.
+
+`Resolve` means the host name could not be turned into an address; `Connect`
+means it resolved but no address accepted a connection. They need telling
+apart, because only the second says anything about the remote host.")
+(deftype ConnectError
+  (Resolve [String])
+  (Connect [String]))
+
+(defmodule ConnectError
+  (doc message "returns the underlying system message, whichever kind of
+failure this is.")
+  (defn message [e]
+    (match-ref e (ConnectError.Resolve m) @m (ConnectError.Connect m) @m))
+
+  (doc resolve? "whether the host name could not be resolved.")
+  (defn resolve? [e]
+    (match-ref e (ConnectError.Resolve _) true (ConnectError.Connect _) false))
+
+  (doc str "formats a `ConnectError` as a human-readable string.")
+  (defn str [e]
+    (match-ref e
+      (ConnectError.Resolve m) (fmt "cannot resolve host: %s" m)
+      (ConnectError.Connect m) (fmt "cannot connect: %s" m)))
+  (implements str ConnectError.str))
+
 (defmodule TcpStream
   (private connect-)
   (hidden connect-)
@@ -26,6 +52,14 @@ and accepted server connections.
   (private fd-)
   (hidden fd-)
   (register fd- (Fn [&TcpStream] Int) "TcpStream_fd_")
+  (private resolve-code-)
+  (hidden resolve-code-)
+  (register resolve-code- (Fn [] Int) "TcpStream_resolve_MINUS_code_")
+  (private resolve-text-)
+  (hidden resolve-text-)
+  (register resolve-text-
+    (Fn [] String)
+    "TcpStream_resolve_MINUS_error_MINUS_text_")
   (private send-)
   (hidden send-)
   (register send- (Fn [&TcpStream &String] Int) "TcpStream_send_")
@@ -53,11 +87,36 @@ and accepted server connections.
     (Fn [&TcpStream &(Array Byte)] Int)
     "TcpStream_read_MINUS_append_")
 
-  (doc connect
-    "connects to a remote TCP address. Returns `(Result TcpStream String)`.")
-  (defn connect [addr port]
+  ; Only reached once a connect has already failed, so the stashed resolve
+  ; code belongs to that attempt.
+  (hidden connect-error)
+  (private connect-error)
+  (defn connect-error []
+    (if (/= (resolve-code-) 0)
+      (ConnectError.Resolve (resolve-text-))
+      (ConnectError.Connect (System.error-text))))
+
+  (doc connect-classified
+    "connects to a remote TCP address like `connect`, but tells a
+name-resolution failure apart from a connection failure.
+Returns `(Result TcpStream ConnectError)`.
+
+`connect` cannot make that distinction on its own: `getaddrinfo` reports
+through its return code and leaves `errno` alone, so a resolution failure has
+no `errno` of its own to report.")
+  (defn connect-classified [addr port]
     (let [s (connect- addr port)]
-      (if (= (fd- &s) -1) (Result.Error (System.error-text)) (Result.Success s))))
+      (if (= (fd- &s) -1) (Result.Error (connect-error)) (Result.Success s))))
+
+  (doc connect
+    "connects to a remote TCP address. Returns `(Result TcpStream String)`.
+
+See `connect-classified` to tell a resolution failure from a connection
+failure.")
+  (defn connect [addr port]
+    (match (connect-classified addr port)
+      (Result.Success s) (Result.Success s)
+      (Result.Error e) (Result.Error (ConnectError.message &e))))
 
   (doc send "sends a string over the stream. Returns bytes sent or an error.")
   (defn send [stream msg]
@@ -208,9 +267,18 @@ would-block on a non-blocking socket).")
   (register connect-timeout-
     (Fn [&String Int Int] TcpStream)
     "TcpStream_connect_MINUS_timeout_")
-  (defn connect-timeout [addr port timeout]
+  (doc connect-timeout-classified
+    "connects with a timeout like `connect-timeout`, but tells a
+name-resolution failure apart from a connection failure.
+Returns `(Result TcpStream ConnectError)`.")
+  (defn connect-timeout-classified [addr port timeout]
     (let [s (connect-timeout- addr port timeout)]
-      (if (= (fd- &s) -1) (Result.Error (System.error-text)) (Result.Success s))))
+      (if (= (fd- &s) -1) (Result.Error (connect-error)) (Result.Success s))))
+
+  (defn connect-timeout [addr port timeout]
+    (match (connect-timeout-classified addr port timeout)
+      (Result.Success s) (Result.Success s)
+      (Result.Error e) (Result.Error (ConnectError.message &e))))
 
   (doc peer-address "returns the IP address of the remote peer.")
   (register peer-address (Fn [&TcpStream] String))

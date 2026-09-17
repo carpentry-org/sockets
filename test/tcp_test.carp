@@ -33,6 +33,13 @@
           (AddrTest.release held)
           ok)))))
 
+; Names the branch `connect-classified` took, so a wrong classification reads
+; differently from a failure to classify at all.
+(defn connect-kind [host port]
+  (match (TcpStream.connect-classified host port)
+    (Result.Success s) (do (TcpStream.close s) @"connected")
+    (Result.Error e) (if (ConnectError.resolve? &e) @"resolve" @"connect")))
+
 (defn tcp-roundtrip []
   (match (TcpListener.bind "127.0.0.1" 0)
     ; port 0 = OS assigns
@@ -180,4 +187,25 @@ line two
 
   (assert-true test
     (bind-falls-back-to-next-candidate?)
-    "bind tries the next candidate when the first address is taken"))
+    "bind tries the next candidate when the first address is taken")
+
+  ; A label with a space is not a legal host name, so this fails in the stub
+  ; resolver and needs no network. Whatever the resolver answers -- NXDOMAIN,
+  ; no resolver at all -- it is still a resolution failure.
+  (assert-equal test
+    "resolve"
+    &(connect-kind "a b c" 80)
+    "a host name that cannot resolve is a Resolve error")
+
+  ; Port 9 (discard) on loopback, with nothing bound: resolution succeeds and
+  ; the connection is refused.
+  (assert-equal test
+    "connect"
+    &(connect-kind "127.0.0.1" 9)
+    "a resolvable host that refuses is a Connect error")
+
+  (assert-true test
+    (match (TcpStream.connect "a b c" 80)
+      (Result.Error e) (/= &e &(System.error-text))
+      _ false)
+    "connect reports the resolver, not a stale errno"))

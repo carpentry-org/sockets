@@ -23,6 +23,21 @@ static void carp_sock_ignore_sigpipe(void) {
   signal(SIGPIPE, SIG_IGN);
 }
 
+/* getaddrinfo reports through its return code and leaves errno alone, so a
+   resolution failure cannot be told from a connect failure by errno, and
+   reporting strerror(errno) there prints whatever happened to be left over.
+   The connect paths stash the code here instead. */
+static int sock_last_gai = 0;
+
+__attribute__((unused))
+static String sock_gai_string() {
+  const char* msg = gai_strerror(sock_last_gai);
+  size_t len = strlen(msg);
+  String s = CARP_MALLOC(len + 1);
+  memcpy(s, msg, len + 1);
+  return s;
+}
+
 __attribute__((unused))
 static String sock_error_string() {
   const char* msg = strerror(errno);

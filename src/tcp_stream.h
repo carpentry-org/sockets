@@ -24,7 +24,12 @@ TcpStream TcpStream_connect_(String* host, int port) {
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_ADDRCONFIG;
 
-  if (getaddrinfo(*host, port_str, &hints, &result) != 0) return s;
+  sock_last_gai = 0;
+  int gai = getaddrinfo(*host, port_str, &hints, &result);
+  if (gai != 0) {
+    sock_last_gai = gai;
+    return s;
+  }
 
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     int fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -42,6 +47,13 @@ TcpStream TcpStream_connect_(String* host, int port) {
 }
 
 int TcpStream_fd_(TcpStream* s) { return s->fd; }
+
+/* Non-zero when the last connect attempt failed to resolve the host. */
+int TcpStream_resolve_MINUS_code_(void) { return sock_last_gai; }
+
+String TcpStream_resolve_MINUS_error_MINUS_text_(void) {
+  return sock_gai_string();
+}
 
 int TcpStream_send_(TcpStream* s, String* msg) {
   return (int)send_all(s->fd, *msg, strlen(*msg));
@@ -264,7 +276,12 @@ TcpStream TcpStream_connect_MINUS_timeout_(String* host, int port, int timeout_s
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_ADDRCONFIG;
-  if (getaddrinfo(*host, port_str, &hints, &result) != 0) return s;
+  sock_last_gai = 0;
+  int gai = getaddrinfo(*host, port_str, &hints, &result);
+  if (gai != 0) {
+    sock_last_gai = gai;
+    return s;
+  }
 
   for (rp = result; rp != NULL; rp = rp->ai_next) {
     int fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
