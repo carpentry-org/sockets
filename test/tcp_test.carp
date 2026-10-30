@@ -3,12 +3,17 @@
 (use Test)
 
 (relative-include "addr_helpers.h")
+(relative-include "fd_helpers.h")
 
 (defmodule AddrTest
   (register stream-families (Fn [] Int) "AddrTest_stream_MINUS_families_")
   (register occupy-first (Fn [] Int) "AddrTest_occupy_MINUS_first_")
   (register occupied-port (Fn [Int] Int) "AddrTest_occupied_MINUS_port_")
   (register release (Fn [Int] ()) "AddrTest_release_"))
+
+(defmodule FdTest
+  (register occupy-low (Fn [] Bool) "FdTest_occupy_MINUS_low_")
+  (register release (Fn [] ()) "FdTest_release_"))
 
 (defn bind-falls-back-to-next-candidate? []
   (if (< (AddrTest.stream-families) 2)
@@ -39,6 +44,29 @@
   (match (TcpStream.connect-classified host port)
     (Result.Success s) (do (TcpStream.close s) @"connected")
     (Result.Error e) (if (ConnectError.resolve? &e) @"resolve" @"connect")))
+
+(defn connect-timeout-past-fd-setsize? []
+  (match (TcpListener.bind "127.0.0.1" 0)
+    (Result.Error _) false
+    (Result.Success listener)
+      (if (FdTest.occupy-low)
+        (let-do [port (TcpListener.local-port &listener)
+                 streams []
+                 ok true]
+          ; every stream stays open, so each connect lands one fd higher
+          (while-do (and ok (< (Array.length &streams) 128))
+            (match (TcpStream.connect-timeout "127.0.0.1" port 5)
+              (Result.Success s) (Array.push-back! &streams s)
+              (Result.Error _) (set! ok false)))
+          (foreach [s &streams] (TcpStream.close! s))
+          (FdTest.release)
+          (TcpListener.close listener)
+          ok)
+        (do
+          (IO.println
+            "  skipped: could not hold every descriptor below FD_SETSIZE")
+          (TcpListener.close listener)
+          true))))
 
 (defn tcp-roundtrip []
   (match (TcpListener.bind "127.0.0.1" 0)
@@ -208,4 +236,8 @@ line two
     (match (TcpStream.connect "a b c" 80)
       (Result.Error e) (/= &e &(System.error-text))
       _ false)
-    "connect reports the resolver, not a stale errno"))
+    "connect reports the resolver, not a stale errno")
+
+  (assert-true test
+    (connect-timeout-past-fd-setsize?)
+    "connect-timeout connects when the new socket's fd is past FD_SETSIZE"))
