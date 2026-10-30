@@ -1,6 +1,9 @@
 #ifndef CARP_TCP_STREAM_H
 #define CARP_TCP_STREAM_H
 
+#include <limits.h>
+#include <poll.h>
+
 #include "common.h"
 
 typedef struct {
@@ -303,11 +306,9 @@ TcpStream TcpStream_connect_MINUS_timeout_(String* host, int port, int timeout_s
     if (errno != EINPROGRESS) { close(fd); continue; }
 
     /* Wait with timeout */
-    fd_set wset;
-    FD_ZERO(&wset);
-    FD_SET(fd, &wset);
-    struct timeval tv = { .tv_sec = timeout_sec, .tv_usec = 0 };
-    ret = select(fd + 1, NULL, &wset, NULL, &tv);
+    if (timeout_sec < 0) { close(fd); errno = EINVAL; continue; }
+    struct pollfd pfd = { .fd = fd, .events = POLLOUT };
+    ret = poll(&pfd, 1, timeout_sec > INT_MAX / 1000 ? INT_MAX : timeout_sec * 1000);
     if (ret <= 0) { close(fd); continue; } /* timeout or error */
 
     /* Check for connection error */
